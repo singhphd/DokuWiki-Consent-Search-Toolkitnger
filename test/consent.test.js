@@ -137,7 +137,7 @@ function runPlugin({
     const context = {
         document,
         window,
-        JSINFO: { ACT: 'show', plugins: { googleconsent: config } },
+        JSINFO: { ACT: 'show', plugins: { consentsearchtoolkit: config } },
         LANG: { template: {} },
         jQuery: callback => callback(),
         URL,
@@ -157,15 +157,15 @@ test('strict opt-in does not load tags until a category is accepted', () => {
     const plugin = runPlugin({ cookies: 'dokuwiki_session=keep' });
     assert.equal(plugin.externalScripts().length, 0);
 
-    plugin.button('googleconsent-manage').click();
-    const analytics = find(plugin.body, item => item.id === 'googleconsent-analytics');
+    plugin.button('consentsearchtoolkit-manage').click();
+    const analytics = find(plugin.body, item => item.id === 'consentsearchtoolkit-analytics');
     analytics.checked = true;
-    plugin.button('googleconsent-save').click();
+    plugin.button('consentsearchtoolkit-save').click();
 
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
     ]);
-    assert.equal(plugin.button('googleconsent-opener').focused, true);
+    assert.equal(plugin.button('consentsearchtoolkit-opener').focused, true);
     const cookies = plugin.document.cookie;
     assert.match(cookies, /dokuwiki_session=keep/);
     assert.ok(cookies.includes(`${consentCookie}=`));
@@ -173,7 +173,7 @@ test('strict opt-in does not load tags until a category is accepted', () => {
 
 test('rejecting optional categories does not load tags or clear unrelated cookies', () => {
     const plugin = runPlugin({ cookies: 'dokuwiki_session=keep; other_site=value' });
-    plugin.button('googleconsent-reject').click();
+    plugin.button('consentsearchtoolkit-reject').click();
 
     assert.equal(plugin.externalScripts().length, 0);
     assert.match(plugin.document.cookie, /dokuwiki_session=keep/);
@@ -198,9 +198,9 @@ test('standalone GA4 and Auto Ads load only for their separate consent categorie
         overrides: { GTMID: '', GA4ID: 'G-ABC123', adsenseID: 'ca-pub-1234567890123456' }
     });
 
-    plugin.button('googleconsent-manage').click();
-    find(plugin.body, item => item.id === 'googleconsent-analytics').checked = true;
-    plugin.button('googleconsent-save').click();
+    plugin.button('consentsearchtoolkit-manage').click();
+    find(plugin.body, item => item.id === 'consentsearchtoolkit-analytics').checked = true;
+    plugin.button('consentsearchtoolkit-save').click();
 
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtag/js?id=G-ABC123'
@@ -209,9 +209,9 @@ test('standalone GA4 and Auto Ads load only for their separate consent categorie
     const adsOnly = runPlugin({
         overrides: { GTMID: '', GA4ID: '', adsenseID: 'ca-pub-1234567890123456' }
     });
-    adsOnly.button('googleconsent-manage').click();
-    find(adsOnly.body, item => item.id === 'googleconsent-advertising').checked = true;
-    adsOnly.button('googleconsent-save').click();
+    adsOnly.button('consentsearchtoolkit-manage').click();
+    find(adsOnly.body, item => item.id === 'consentsearchtoolkit-advertising').checked = true;
+    adsOnly.button('consentsearchtoolkit-save').click();
     assert.deepEqual(adsOnly.externalScripts().map(script => script.src), [
         'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456'
     ]);
@@ -222,7 +222,7 @@ test('GA4 initializes a dataLayer fallback before queuing configuration', () => 
         noGtag: true,
         overrides: { GTMID: '', GA4ID: 'G-ABC123', adsenseID: '' }
     });
-    plugin.button('googleconsent-accept').click();
+    plugin.button('consentsearchtoolkit-accept').click();
 
     assert.equal(typeof plugin.window.gtag, 'function');
     assert.deepEqual(Array.from(plugin.window.dataLayer[0]).slice(0, 2), ['consent', 'update']);
@@ -256,7 +256,7 @@ test('a stored decision is applied before consented integrations load', () => {
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
     ]);
-    assert.equal(plugin.button('googleconsent-opener').hidden, false);
+    assert.equal(plugin.button('consentsearchtoolkit-opener').hidden, false);
 });
 
 test('optional scroll and click shortcuts persist an explicit all-category choice', () => {
@@ -282,25 +282,25 @@ test('optional scroll and click shortcuts persist an explicit all-category choic
 
 test('Consent Mode reject and preference changes update and withdraw categories', () => {
     const plugin = runPlugin({ mode: 'consent' });
-    plugin.button('googleconsent-reject').click();
+    plugin.button('consentsearchtoolkit-reject').click();
     let updates = plugin.window.dataLayer.filter(Array.isArray)
         .filter(call => call[0] === 'consent' && call[1] === 'update');
     assert.equal(updates.at(-1)[2].analytics_storage, 'denied');
     assert.equal(updates.at(-1)[2].ad_storage, 'denied');
 
-    plugin.button('googleconsent-opener').click();
-    find(plugin.body, item => item.id === 'googleconsent-analytics').checked = true;
-    find(plugin.body, item => item.id === 'googleconsent-advertising').checked = true;
-    plugin.button('googleconsent-save').click();
+    plugin.button('consentsearchtoolkit-opener').click();
+    find(plugin.body, item => item.id === 'consentsearchtoolkit-analytics').checked = true;
+    find(plugin.body, item => item.id === 'consentsearchtoolkit-advertising').checked = true;
+    plugin.button('consentsearchtoolkit-save').click();
     updates = plugin.window.dataLayer.filter(Array.isArray)
         .filter(call => call[0] === 'consent' && call[1] === 'update');
     assert.equal(updates.at(-1)[2].analytics_storage, 'granted');
     assert.equal(updates.at(-1)[2].ad_storage, 'granted');
 
-    plugin.button('googleconsent-opener').click();
-    find(plugin.body, item => item.id === 'googleconsent-analytics').checked = false;
-    find(plugin.body, item => item.id === 'googleconsent-advertising').checked = false;
-    plugin.button('googleconsent-save').click();
+    plugin.button('consentsearchtoolkit-opener').click();
+    find(plugin.body, item => item.id === 'consentsearchtoolkit-analytics').checked = false;
+    find(plugin.body, item => item.id === 'consentsearchtoolkit-advertising').checked = false;
+    plugin.button('consentsearchtoolkit-save').click();
     updates = plugin.window.dataLayer.filter(Array.isArray)
         .filter(call => call[0] === 'consent' && call[1] === 'update');
     assert.equal(updates.at(-1)[2].analytics_storage, 'denied');
@@ -309,10 +309,10 @@ test('Consent Mode reject and preference changes update and withdraw categories'
 
 test('Escape closes the preferences panel and returns focus', () => {
     const plugin = runPlugin();
-    plugin.button('googleconsent-manage').click();
-    const preferences = find(plugin.body, item => item.className === 'googleconsent-preferences');
+    plugin.button('consentsearchtoolkit-manage').click();
+    const preferences = find(plugin.body, item => item.className === 'consentsearchtoolkit-preferences');
     preferences.listeners.keydown({ key: 'Escape' });
 
     assert.equal(preferences.hidden, true);
-    assert.equal(plugin.button('googleconsent-manage').focused, true);
+    assert.equal(plugin.button('consentsearchtoolkit-manage').focused, true);
 });

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Default settings for the googleconsentmananger plugin
+ * Default settings for the consentsearchtoolkit plugin
  *
  * @author i-net /// software <tools@inetsoftware.de>
  */
@@ -18,7 +18,7 @@ $conf['newsPublicationName'] = '';
 $conf['newsLanguage'] = 'en';
 $conf['newsNamespace'] = '';
 $conf['indexNowKey'] = '';
-$conf['acceptBody'] = 'We use optional analytics and advertising. Choose your preferences.';
+$conf['acceptBody'] = 'We use optional analytics and advertising technologies, which may use cookies or similar identifiers. Choose your preferences and see our privacy policy for details.';
 $conf['policyURL'] = '';
 $conf['expireDays'] = '180';
 $conf['acceptOnContinue'] = '';

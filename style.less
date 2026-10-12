@@ -1,10 +1,10 @@
-.googleconsent-banner,
-.googleconsent-opener {
+.consentsearchtoolkit-banner,
+.consentsearchtoolkit-opener {
     box-sizing: border-box;
     font: inherit;
 }
 
-.googleconsent-banner {
+.consentsearchtoolkit-banner {
     position: fixed;
     z-index: 10000;
     right: 1rem;
@@ -20,30 +20,30 @@
     box-shadow: 0 0 1rem rgba(0, 0, 0, .35);
 }
 
-.googleconsent-banner[hidden],
-.googleconsent-preferences[hidden],
-.googleconsent-opener[hidden] {
+.consentsearchtoolkit-banner[hidden],
+.consentsearchtoolkit-preferences[hidden],
+.consentsearchtoolkit-opener[hidden] {
     display: none;
 }
 
-.googleconsent-message {
+.consentsearchtoolkit-message {
     margin: 0 0 .75rem;
 }
 
-.googleconsent-policy {
+.consentsearchtoolkit-policy {
     display: inline-block;
     margin-bottom: .75rem;
 }
 
-.googleconsent-actions,
-.googleconsent-preferences {
+.consentsearchtoolkit-actions,
+.consentsearchtoolkit-preferences {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: .5rem;
 }
 
-.googleconsent-preferences {
+.consentsearchtoolkit-preferences {
     align-items: flex-start;
     flex-direction: column;
     margin-top: 1rem;
@@ -51,18 +51,18 @@
     border-top: 1px solid #aaa;
 }
 
-.googleconsent-preferences h2,
-.googleconsent-preferences p {
+.consentsearchtoolkit-preferences h2,
+.consentsearchtoolkit-preferences p {
     margin: 0;
 }
 
-.googleconsent-category {
+.consentsearchtoolkit-category {
     display: block;
     padding: .25rem 0;
 }
 
-.googleconsent-banner button,
-.googleconsent-opener {
+.consentsearchtoolkit-banner button,
+.consentsearchtoolkit-opener {
     min-height: 2.5rem;
     padding: .45rem .8rem;
     color: #111;
@@ -72,25 +72,25 @@
     cursor: pointer;
 }
 
-.googleconsent-banner button:hover,
-.googleconsent-opener:hover {
+.consentsearchtoolkit-banner button:hover,
+.consentsearchtoolkit-opener:hover {
     background: #e2e2e2;
 }
 
-.googleconsent-banner button:focus-visible,
-.googleconsent-opener:focus-visible,
-.googleconsent-category input:focus-visible {
+.consentsearchtoolkit-banner button:focus-visible,
+.consentsearchtoolkit-opener:focus-visible,
+.consentsearchtoolkit-category input:focus-visible {
     outline: 3px solid #005fcc;
     outline-offset: 2px;
 }
 
-.googleconsent-accept,
-.googleconsent-save {
+.consentsearchtoolkit-accept,
+.consentsearchtoolkit-save {
     color: #fff !important;
     background: #176b2c !important;
 }
 
-.googleconsent-opener {
+.consentsearchtoolkit-opener {
     position: fixed;
     z-index: 9999;
     right: 1rem;
@@ -98,14 +98,14 @@
 }
 
 @media (max-width: 36rem) {
-    .googleconsent-banner {
+    .consentsearchtoolkit-banner {
         right: .5rem;
         bottom: .5rem;
         left: .5rem;
         padding: .75rem;
     }
 
-    .googleconsent-actions {
+    .consentsearchtoolkit-actions {
         align-items: stretch;
         flex-direction: column;
     }

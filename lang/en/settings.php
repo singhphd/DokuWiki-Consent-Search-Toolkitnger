@@ -1,7 +1,7 @@
 <?php
 
 /**
- * English language file for googleconsentmananger plugin
+ * English language file for consentsearchtoolkit plugin
  *
  * @author i-net /// software <tools@inetsoftware.de>
  */
@@ -19,7 +19,7 @@ $lang['newsLanguage'] = 'Google News sitemap language code (two-letter ISO 639-1
 $lang['newsNamespace'] = 'Namespace containing Google News articles';
 $lang['indexNowKey'] = 'IndexNow API key (8–128 letters, numbers, or hyphens)';
 $lang['acceptBody'] = 'Consent banner message';
-$lang['policyURL'] = 'Privacy policy URL (optional)';
+$lang['policyURL'] = 'Privacy policy URL (recommended; link an accurate policy if using AdSense)';
 $lang['expireDays'] = 'Days to remember consent (1–3650)';
 $lang['acceptOnContinue'] = 'Treat following an internal link as accepting all optional categories (not recommended)';
 $lang['acceptOnScroll'] = 'Treat scrolling this many pixels as accepting all optional categories (0 disables; legacy value 1 becomes 1000)';

@@ -7,12 +7,12 @@ use dokuwiki\HTTP\DokuHTTPClient;
 use dokuwiki\Search\Indexer;
 
 /**
- * DokuWiki Plugin googleconsentmananger (Action Component)
+ * DokuWiki Plugin consentsearchtoolkit (Action Component)
  *
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author i-net /// software <tools@inetsoftware.de>
  */
-class action_plugin_googleconsentmananger extends ActionPlugin
+class action_plugin_consentsearchtoolkit extends ActionPlugin
 {
     const GTM_PATTERN = '/^GTM-[A-Z0-9]+$/';
     const GA4_PATTERN = '/^G-[A-Z0-9]+$/';
@@ -33,8 +33,9 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         $mode = $this->getConf('consentMode');
         $scrollThreshold = max(0, min(100000, (int)$this->getConf('acceptOnScroll')));
         if ($scrollThreshold === 1) $scrollThreshold = 1000;
-        $JSINFO['plugins']['googleconsent'] = [
+        $JSINFO['plugins']['consentsearchtoolkit'] = [
             'template' => $conf['template'],
+            // Keep existing visitor choices when the plugin ID changes.
             'consentCookieName' => 'googleconsentmananger-consent',
             'consentMode' => in_array($mode, ['strict', 'consent'], true) ? $mode : 'strict',
             'GTMID' => $this->getGTMID(),
@@ -50,7 +51,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         foreach (['acceptAll', 'rejectAll', 'managePreferences', 'savePreferences',
                      'analyticsLabel', 'advertisingLabel', 'necessaryLabel', 'preferencesTitle',
                      'preferencesDescription', 'openPreferences', 'policyLabel'] as $key) {
-            $JSINFO['plugins']['googleconsent'][$key] = (string)$this->getLang($key);
+            $JSINFO['plugins']['consentsearchtoolkit'][$key] = (string)$this->getLang($key);
         }
     }
 
@@ -86,14 +87,17 @@ class action_plugin_googleconsentmananger extends ActionPlugin
 
     public function handleCustomAction(Event $event, $param)
     {
-        if ($event->data === 'googleconsentnews') {
+        if (in_array($event->data, ['consentsearchtoolkitnews', 'googleconsentnews'], true)) {
             header('Content-Type: application/xml; charset=utf-8');
             header('Cache-Control: public, max-age=300');
             echo $this->generateNewsSitemap();
             exit;
         }
 
-        if ($event->data === 'googleconsentindexnowkey') {
+        if (in_array($event->data, [
+            'consentsearchtoolkitindexnowkey',
+            'googleconsentindexnowkey',
+        ], true)) {
             $key = $this->getIndexNowKey();
             if ($key === '') {
                 http_status(404);
@@ -126,7 +130,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         $site = parse_url(DOKU_URL);
         if (!$site || empty($site['host']) || parse_url($url, PHP_URL_HOST) !== $site['host']) return;
 
-        $keyLocation = wl('', ['do' => 'googleconsentindexnowkey'], true, '&');
+        $keyLocation = wl('', ['do' => 'consentsearchtoolkitindexnowkey'], true, '&');
         $body = json_encode([
             'host' => $site['host'],
             'key' => $key,

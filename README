@@ -1,12 +1,12 @@
-# Google Consent Manager for DokuWiki
+# DokuWiki Consent & Search Toolkit
 
-Manage optional analytics and advertising consent, and conditionally load Google
-Tag Manager, Google Analytics 4, and AdSense Auto Ads. Webmaster verification
-tokens can also be added without enabling tracking.
+Manage optional analytics and advertising consent, conditionally load Google
+tags, add webmaster verification metadata, and provide Google News sitemap and
+IndexNow integrations.
 
 ## Setup
 
-Install the plugin in `lib/plugins/googleconsentmananger/`, then configure it
+Install the plugin in `lib/plugins/consentsearchtoolkit/`, then configure it
 in DokuWiki's Configuration Manager:
 
 * Set **Consent mode** to `strict` or `consent`.
@@ -20,8 +20,73 @@ in DokuWiki's Configuration Manager:
   its matching key response URL as described below.
 
 Invalid IDs and verification tokens are ignored. The privacy policy URL must be
-a relative path or an HTTP(S) URL. Verification tags are independent from
+a root-relative path or an HTTP(S) URL. Verification tags are independent from
 tracking consent.
+
+The plugin ID is now `consentsearchtoolkit`. When migrating from
+`googleconsentmananger`, install this plugin under its new directory, copy old
+plugin settings into the new `plugin»consentsearchtoolkit` configuration
+section, and disable/remove the old installation to avoid duplicate banners
+and tags. The consent cookie remains `googleconsentmananger-consent`, retaining
+existing visitor choices. Existing sitemap and key-verification action URLs
+continue to work; newly generated links use the `consentsearchtoolkit` names.
+
+## Features and settings
+
+All settings are available in DokuWiki's Configuration Manager:
+
+| Setting | Purpose |
+| --- | --- |
+| `consentMode` | `strict` (default) gates all Google tag downloads until consent; `consent` loads GTM before a choice with Google's consent defaults denied. |
+| `GTMID` | Optional Google Tag Manager container (`GTM-...`). |
+| `GA4ID` | Optional standalone Google Analytics 4 measurement ID (`G-...`); ignored when GTM is configured. |
+| `adsenseID` | Optional AdSense Auto Ads publisher ID (`ca-pub-` plus 16 digits). |
+| `googleVerification`, `bingVerification`, `yandexVerification`, `pinterestVerification` | Optional search-engine/webmaster domain-verification tokens, emitted as standard meta tags. |
+| `newsPublicationName`, `newsLanguage`, `newsNamespace` | Enable a Google News sitemap for a namespace, using the publication's exact registered name and a two-letter language code. |
+| `indexNowKey` | Optional IndexNow API key (8–128 letters, digits, or hyphens); enables the verification response URL and page-change notifications. |
+| `acceptBody` | Custom consent-banner message. |
+| `policyURL` | Privacy-policy link in the banner; configure it for AdSense and make the linked policy easy to find. |
+| `expireDays` | Consent-cookie lifetime in days (1–3650; default 180). |
+| `acceptOnContinue`, `acceptOnScroll`, `acceptAnyClick` | Optional shortcuts that accept both analytics and advertising; disabled by default. |
+
+The consent interface offers accept-all, reject-optional, and per-category
+preferences for analytics and advertising; necessary functionality and security
+storage are always allowed. The saved choice can be changed or withdrawn using
+the persistent **Cookie preferences** button. The banner uses translated
+language strings, supports keyboard focus and Escape to close the preferences
+panel, and is shown on page-view actions. Consent is stored separately from
+DokuWiki's own session and other cookies.
+
+## AdSense privacy and consent requirements
+
+This plugin provides a basic consent banner and Google Consent Mode signals; it
+is **not** a Google-certified consent management platform (CMP), does not
+implement the IAB Transparency and Consent Framework (TCF), and does not create
+server-side consent logs or jurisdiction-specific opt-out controls such as
+“Do Not Sell or Share.” Google requires publishers serving ads to users in the
+EEA, UK, or Switzerland to use a Google-certified CMP integrated with the IAB
+TCF. This plugin alone does not meet that requirement. Use an eligible CMP for
+those audiences and verify current requirements in
+[Google's AdSense requirements](https://support.google.com/adsense/answer/7670013?hl=en).
+
+If you use AdSense, publish an accurate privacy policy and link it with
+`policyURL`. Explain that Google and other third-party vendors may use cookies
+or other identifiers, how data is collected and used for ads, and how visitors
+can manage or opt out of personalized advertising. Google's
+[required site content guidance](https://support.google.com/adsense/answer/1348695?hl=en)
+and [advertising privacy information](https://policies.google.com/technologies/ads)
+are the authoritative references; disclose additional ad networks you actually
+use. The linked third-party policy-generator article can be a drafting
+reference, not a substitute for current Google policy or legal advice.
+
+The plugin's **Advertising** preference grants or denies Google's advertising
+Consent Mode signals for integrations it loads; it is not a granular choice for
+personalized versus non-personalized ads, individual ad partners, or regional
+privacy rights. The optional accept-on-navigation/scroll/click settings accept
+both optional categories and remain disabled by default; review local legal
+requirements before enabling them. This plugin does not determine visitor
+location or block tags installed independently by your template, GTM container,
+or other plugins.
 
 ## Consent behavior
 
@@ -38,11 +103,12 @@ send cookieless pings while consent is denied, depending on the tags and
 container configuration. Choose strict opt-in if any pre-consent Google
 requests are unacceptable.
 
-Consent is stored in a plugin-specific cookie. Visitors can reopen **Cookie
-preferences** to update or withdraw optional consent. Necessary functionality
-and security storage remain allowed; analytics and advertising are controlled
-separately. A changed choice updates Google Consent Mode immediately, but a
-script already downloaded cannot be unloaded from the current page.
+Consent is stored in the `googleconsentmananger-consent` cookie. Visitors can
+reopen **Cookie preferences** to update or withdraw optional consent. Necessary
+functionality and security storage remain allowed; analytics and advertising are
+controlled separately. A changed choice updates Google Consent Mode
+immediately, but a script already downloaded cannot be unloaded from the
+current page. The cookie retains its original name for migration compatibility.
 Existing `cb-enabled` cookie-bar choices are not migrated because they cannot
 represent separate analytics and advertising preferences; visitors will be
 asked to make a new choice after upgrading.
@@ -64,8 +130,6 @@ result. This plugin gates its direct integrations, but third-party scripts
 added by the DokuWiki template or other plugins are outside its control. In
 strict mode, configure GTM tags to require the matching additional consent
 before firing; default Consent Mode checks may allow cookieless pings.
-The internal preference-cookie name intentionally follows the existing
-`googleconsentmananger` plugin identifier.
 
 The Webmaster-inspired verification fields add standard verification meta
 tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
@@ -78,7 +142,7 @@ this plugin implements them independently and does not copy their code.
 ## Google News sitemap
 
 When the publication name, language, and namespace are configured, the plugin
-generates a sitemap at `?do=googleconsentnews`. It includes only public,
+generates a sitemap at `?do=consentsearchtoolkitnews`. It includes only public,
 non-hidden pages in that namespace that were first created within the last
 48 hours, newest first, up to Google's 1,000-URL limit. The page's first
 heading is used as its title; pages without one use their page name. Submit
@@ -88,10 +152,12 @@ policies and is not guaranteed by sitemap submission.
 
 ## IndexNow
 
-After public page creation, edits, reverts, or deletion, the plugin submits the
-page URL to the IndexNow API. Minor edits are ignored. IndexNow setup requires
-the configured key to be verifiable at
-`?do=googleconsentindexnowkey`; that URL responds with the key as plain text.
+After page creation, edits, reverts, or deletion, the plugin submits the page
+URL to the IndexNow API; hidden pages and pages without public read access are
+excluded for non-deletion events. Minor edits are ignored. Configure the key
+response URL at
+`?do=consentsearchtoolkitindexnowkey`; that URL responds with the key as plain
+text.
 Configure the full HTTPS key-location URL in IndexNow/Search Console tools if
 requested. The IndexNow request runs during the page-save request and can take
 up to five seconds when the remote service is slow. Pages are still saved if a
@@ -103,6 +169,16 @@ The plugin uses DokuWiki's action-plugin events, Configuration Manager, and
 JavaScript information. No external JavaScript library is required beyond
 DokuWiki's bundled jQuery for plugin initialization. Test integrations with
 your DokuWiki template and any GTM tags before enabling them on a live site.
+
+## References
+
+* [Google AdSense: Ad serving requirements for the EEA, UK, and Switzerland](https://support.google.com/adsense/answer/7670013?hl=en)
+* [Google AdSense: Required content for your site](https://support.google.com/adsense/answer/1348695?hl=en)
+* [Monetize Helper: Cookie consent and AdSense compliance](https://monetizehelper.com/blog/cookie-consent-adsense-compliance)
+* [Legal Policy Generator: AdSense privacy policy guidance](https://legalpolicygenerator.com/resources/adsense-privacy-policy)
+
+The third-party articles are informational references; Google policy and
+applicable law take precedence.
 
 ## License
 

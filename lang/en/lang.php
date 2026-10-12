@@ -1,7 +1,7 @@
 <?php
 
 /**
- * English language file for googleconsentmananger plugin
+ * English language file for consentsearchtoolkit plugin
  *
  * @author i-net /// software <tools@inetsoftware.de>
  */
