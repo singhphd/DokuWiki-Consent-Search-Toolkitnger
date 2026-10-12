@@ -98,6 +98,8 @@ namespace {
         if (!$condition) throw new \RuntimeException('Action configuration test failed: ' . $description);
     };
     $check($config['consentMode'] === 'strict', 'invalid modes fall back to strict');
+    $check($config['consentCookieName'] === 'googleconsentmananger-consent',
+        'the existing consent cookie name is retained after the plugin rename');
     $check($config['GTMID'] === '', 'invalid GTM IDs are omitted');
     $check($config['GA4ID'] === 'G-VALID123', 'valid GA4 IDs are retained');
     $check($config['adsenseID'] === 'ca-pub-1234567890123456', 'valid publisher IDs are retained');

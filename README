@@ -103,11 +103,12 @@ send cookieless pings while consent is denied, depending on the tags and
 container configuration. Choose strict opt-in if any pre-consent Google
 requests are unacceptable.
 
-Consent is stored in the `googleconsentmananger-consent` cookie. Visitors can reopen **Cookie
-preferences** to update or withdraw optional consent. Necessary functionality
-and security storage remain allowed; analytics and advertising are controlled
-separately. A changed choice updates Google Consent Mode immediately, but a
-script already downloaded cannot be unloaded from the current page.
+Consent is stored in the `googleconsentmananger-consent` cookie. Visitors can
+reopen **Cookie preferences** to update or withdraw optional consent. Necessary
+functionality and security storage remain allowed; analytics and advertising are
+controlled separately. A changed choice updates Google Consent Mode
+immediately, but a script already downloaded cannot be unloaded from the
+current page. The cookie retains its original name for migration compatibility.
 Existing `cb-enabled` cookie-bar choices are not migrated because they cannot
 represent separate analytics and advertising preferences; visitors will be
 asked to make a new choice after upgrading.
@@ -129,7 +130,6 @@ result. This plugin gates its direct integrations, but third-party scripts
 added by the DokuWiki template or other plugins are outside its control. In
 strict mode, configure GTM tags to require the matching additional consent
 before firing; default Consent Mode checks may allow cookieless pings.
-The preference cookie keeps its original name for migration compatibility.
 
 The Webmaster-inspired verification fields add standard verification meta
 tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
@@ -154,9 +154,10 @@ policies and is not guaranteed by sitemap submission.
 
 After page creation, edits, reverts, or deletion, the plugin submits the page
 URL to the IndexNow API; hidden pages and pages without public read access are
-excluded for non-deletion events. Minor edits are ignored. IndexNow setup requires
-the configured key to be verifiable at
-`?do=consentsearchtoolkitindexnowkey`; that URL responds with the key as plain text.
+excluded for non-deletion events. Minor edits are ignored. Configure the key
+response URL at
+`?do=consentsearchtoolkitindexnowkey`; that URL responds with the key as plain
+text.
 Configure the full HTTPS key-location URL in IndexNow/Search Console tools if
 requested. The IndexNow request runs during the page-save request and can take
 up to five seconds when the remote service is slow. Pages are still saved if a
@@ -168,6 +169,16 @@ The plugin uses DokuWiki's action-plugin events, Configuration Manager, and
 JavaScript information. No external JavaScript library is required beyond
 DokuWiki's bundled jQuery for plugin initialization. Test integrations with
 your DokuWiki template and any GTM tags before enabling them on a live site.
+
+## References
+
+* [Google AdSense: Ad serving requirements for the EEA, UK, and Switzerland](https://support.google.com/adsense/answer/7670013?hl=en)
+* [Google AdSense: Required content for your site](https://support.google.com/adsense/answer/1348695?hl=en)
+* [Monetize Helper: Cookie consent and AdSense compliance](https://monetizehelper.com/blog/cookie-consent-adsense-compliance)
+* [Legal Policy Generator: AdSense privacy policy guidance](https://legalpolicygenerator.com/resources/adsense-privacy-policy)
+
+The third-party articles are informational references; Google policy and
+applicable law take precedence.
 
 ## License
 
