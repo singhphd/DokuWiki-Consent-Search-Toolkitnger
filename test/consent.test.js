@@ -4,6 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
+const consentCookie = 'googleconsentmananger-consent';
 const source = fs.readFileSync(path.join(__dirname, '..', 'script.js'), 'utf8');
 
 class Element {
@@ -65,6 +66,7 @@ function runPlugin({
     cookies = '',
     referrer = '',
     acceptOnScroll = 0,
+    noGtag = false,
     overrides = {}
 } = {}) {
     const cookieJar = new Map(cookies.split(';').filter(Boolean).map(item => {
@@ -102,7 +104,7 @@ function runPlugin({
         addEventListener(name, callback) { this.listeners[name] = callback; },
         removeEventListener(name) { delete this.listeners[name]; }
     };
-    window.gtag = (...args) => window.dataLayer.push(args);
+    if (!noGtag) window.gtag = (...args) => window.dataLayer.push(args);
     const config = Object.assign({
         template: 'default',
         consentMode: mode,
@@ -160,7 +162,7 @@ test('strict opt-in does not load tags until a category is accepted', () => {
     ]);
     const cookies = plugin.document.cookie;
     assert.match(cookies, /dokuwiki_session=keep/);
-    assert.match(cookies, /googleconsentmananger-consent=/);
+    assert.ok(cookies.includes(`${consentCookie}=`));
 });
 
 test('rejecting optional categories does not load tags or clear unrelated cookies', () => {
@@ -171,7 +173,7 @@ test('rejecting optional categories does not load tags or clear unrelated cookie
     assert.match(plugin.document.cookie, /dokuwiki_session=keep/);
     assert.match(plugin.document.cookie, /other_site=value/);
     const choice = JSON.parse(decodeURIComponent(
-        plugin.document.cookie.match(/googleconsentmananger-consent=([^;]+)/)[1]
+        plugin.document.cookie.match(new RegExp(`${consentCookie}=([^;]+)`))[1]
     ));
     assert.deepEqual(choice, { analytics: false, advertising: false });
 });
@@ -181,13 +183,14 @@ test('Consent Mode loads GTM with denied defaults before a preference is saved',
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
     ]);
-    assert.equal(plugin.document.cookie.includes('googleconsentmananger-consent='), false);
+    assert.equal(plugin.document.cookie.includes(`${consentCookie}=`), false);
 });
 
 test('standalone GA4 and Auto Ads load only for their separate consent categories', () => {
     const plugin = runPlugin({
         overrides: { GTMID: '', GA4ID: 'G-ABC123', adsenseID: 'ca-pub-1234567890123456' }
     });
+
     plugin.button('googleconsent-manage').click();
     find(plugin.body, item => item.id === 'googleconsent-analytics').checked = true;
     plugin.button('googleconsent-save').click();
@@ -207,12 +210,27 @@ test('standalone GA4 and Auto Ads load only for their separate consent categorie
     ]);
 });
 
+test('GA4 initializes a dataLayer fallback before queuing configuration', () => {
+    const plugin = runPlugin({
+        noGtag: true,
+        overrides: { GTMID: '', GA4ID: 'G-ABC123', adsenseID: '' }
+    });
+    plugin.button('googleconsent-accept').click();
+
+    assert.equal(typeof plugin.window.gtag, 'function');
+    assert.deepEqual(Array.from(plugin.window.dataLayer[0]).slice(0, 2), ['consent', 'update']);
+    assert.equal(plugin.window.dataLayer[0][2].analytics_storage, 'granted');
+    assert.deepEqual(Array.from(plugin.window.dataLayer[1]), ['js', plugin.window.dataLayer[1][1]]);
+    assert.deepEqual(Array.from(plugin.window.dataLayer[2]), ['config', 'G-ABC123']);
+    assert.match(plugin.externalScripts()[0].src, /gtag\/js\?id=G-ABC123/);
+});
+
 test('internal navigation acceptance is opt-in and malformed referrers do not break setup', () => {
     const accepted = runPlugin({
         referrer: 'https://wiki.example/old-page',
         overrides: { acceptOnContinue: true }
     });
-    assert.ok(accepted.document.cookie.includes('googleconsentmananger-consent='));
+    assert.ok(accepted.document.cookie.includes(`${consentCookie}=`));
     assert.equal(accepted.externalScripts().length, 2);
 
     const malformed = runPlugin({
@@ -226,7 +244,7 @@ test('internal navigation acceptance is opt-in and malformed referrers do not br
 
 test('a stored decision is applied before consented integrations load', () => {
     const value = encodeURIComponent(JSON.stringify({ analytics: true, advertising: false }));
-    const plugin = runPlugin({ cookies: `googleconsentmananger-consent=${value}` });
+    const plugin = runPlugin({ cookies: `${consentCookie}=${value}` });
 
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
@@ -238,12 +256,22 @@ test('optional scroll and click shortcuts persist an explicit all-category choic
     const scrolled = runPlugin({ acceptOnScroll: 500 });
     scrolled.window.scrollY = 499;
     scrolled.window.listeners.scroll();
-    assert.equal(scrolled.document.cookie.includes('googleconsentmananger-consent='), false);
+    assert.equal(scrolled.document.cookie.includes(`${consentCookie}=`), false);
     scrolled.window.scrollY = 500;
     scrolled.window.listeners.scroll();
-    assert.ok(scrolled.document.cookie.includes('googleconsentmananger-consent='));
+    assert.ok(scrolled.document.cookie.includes(`${consentCookie}=`));
 
     const clicked = runPlugin({ overrides: { acceptAnyClick: true } });
     clicked.document.listeners.click({ target: new Element('a') });
-    assert.ok(clicked.document.cookie.includes('googleconsentmananger-consent='));
+    assert.ok(clicked.document.cookie.includes(`${consentCookie}=`));
+});
+
+test('Escape closes the preferences panel and returns focus', () => {
+    const plugin = runPlugin();
+    plugin.button('googleconsent-manage').click();
+    const preferences = find(plugin.body, item => item.className === 'googleconsent-preferences');
+    preferences.listeners.keydown({ key: 'Escape' });
+
+    assert.equal(preferences.hidden, true);
+    assert.equal(plugin.button('googleconsent-manage').focused, true);
 });

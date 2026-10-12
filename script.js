@@ -64,6 +64,11 @@ jQuery(function () {
         });
     }
 
+    function ensureGtag() {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    }
+
     function loadGTM() {
         if (!options.GTMID || document.getElementById('googleconsent-gtm')) return;
         window.dataLayer = window.dataLayer || [];
@@ -77,15 +82,14 @@ jQuery(function () {
 
     function loadGA4() {
         if (!options.GA4ID || options.GTMID || document.getElementById('googleconsent-ga4')) return;
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+        ensureGtag();
         var script = document.createElement('script');
         script.id = 'googleconsent-ga4';
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(options.GA4ID);
-        document.head.appendChild(script);
         window.gtag('js', new Date());
         window.gtag('config', options.GA4ID);
+        document.head.appendChild(script);
     }
 
     function loadAdSense() {
@@ -100,12 +104,11 @@ jQuery(function () {
     }
 
     function loadConsentedIntegrations(choice) {
+        ensureGtag();
         updateGoogleConsent(choice);
         if (options.consentMode === 'consent') loadGTM();
         else if (choice.analytics || choice.advertising) loadGTM();
-        if (choice.analytics) {
-            if (!options.GTMID) loadGA4();
-        }
+        if (choice.analytics && !options.GTMID) loadGA4();
         if (choice.advertising) {
             loadAdSense();
         }
