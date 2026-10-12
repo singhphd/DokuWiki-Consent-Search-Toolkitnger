@@ -12,6 +12,10 @@ use dokuwiki\Extension\Event;
  */
 class action_plugin_googleconsentmananger extends ActionPlugin
 {
+    const GTM_PATTERN = '/^GTM-[A-Z0-9]+$/';
+    const GA4_PATTERN = '/^G-[A-Z0-9]+$/';
+    const ADSENSE_PATTERN = '/^ca-pub-[0-9]{16}$/';
+
     public function register(EventHandler $controller)
     {
         $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handleTplMetaheaderOutput');
@@ -29,9 +33,9 @@ class action_plugin_googleconsentmananger extends ActionPlugin
             'template' => $conf['template'],
             'consentCookieName' => 'googleconsentmananger-consent',
             'consentMode' => in_array($mode, ['strict', 'consent'], true) ? $mode : 'strict',
-            'GTMID' => $this->validId($this->getConf('GTMID'), '/^GTM-[A-Z0-9]+$/'),
-            'GA4ID' => $this->validId($this->getConf('GA4ID'), '/^G-[A-Z0-9]+$/'),
-            'adsenseID' => $this->validId($this->getConf('adsenseID'), '/^ca-pub-[0-9]{16}$/'),
+            'GTMID' => $this->getGTMID(),
+            'GA4ID' => $this->getGA4ID(),
+            'adsenseID' => $this->getAdsenseID(),
             'acceptBody' => (string)$this->getConf('acceptBody'),
             'policyURL' => $this->validPolicyUrl($this->getConf('policyURL')),
             'expireDays' => max(1, min(3650, (int)$this->getConf('expireDays'))),
@@ -61,9 +65,8 @@ class action_plugin_googleconsentmananger extends ActionPlugin
             }
         }
 
-        $hasTrackingIntegration = $this->validId($this->getConf('GTMID'), '/^GTM-[A-Z0-9]+$/') !== '' ||
-            $this->validId($this->getConf('GA4ID'), '/^G-[A-Z0-9]+$/') !== '' ||
-            $this->validId($this->getConf('adsenseID'), '/^ca-pub-[0-9]{16}$/') !== '';
+        $hasTrackingIntegration = $this->getGTMID() !== '' ||
+            $this->getGA4ID() !== '' || $this->getAdsenseID() !== '';
         if ($hasTrackingIntegration) {
             $event->data['script'][] = [
                 'type' => 'text/javascript',
@@ -81,6 +84,21 @@ class action_plugin_googleconsentmananger extends ActionPlugin
     {
         $value = (string)$value;
         return preg_match($pattern, $value) ? $value : '';
+    }
+
+    private function getGTMID()
+    {
+        return $this->validId($this->getConf('GTMID'), self::GTM_PATTERN);
+    }
+
+    private function getGA4ID()
+    {
+        return $this->validId($this->getConf('GA4ID'), self::GA4_PATTERN);
+    }
+
+    private function getAdsenseID()
+    {
+        return $this->validId($this->getConf('adsenseID'), self::ADSENSE_PATTERN);
     }
 
     private function validPolicyUrl($value)

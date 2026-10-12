@@ -185,10 +185,11 @@ test('rejecting optional categories does not load tags or clear unrelated cookie
 });
 
 test('Consent Mode loads GTM with denied defaults before a preference is saved', () => {
-    const plugin = runPlugin({ mode: 'consent' });
+    const plugin = runPlugin({ mode: 'consent', noGtag: true });
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
     ]);
+    assert.equal(typeof plugin.window.gtag, 'function');
     assert.equal(plugin.document.cookie.includes(`${consentCookie}=`), false);
 });
 

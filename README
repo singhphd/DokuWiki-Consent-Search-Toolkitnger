@@ -60,6 +60,8 @@ result. This plugin gates its direct integrations, but third-party scripts
 added by the DokuWiki template or other plugins are outside its control. In
 strict mode, configure GTM tags to require the matching additional consent
 before firing; default Consent Mode checks may allow cookieless pings.
+The internal preference-cookie name intentionally follows the existing
+`googleconsentmananger` plugin identifier.
 
 The Webmaster-inspired verification fields add standard verification meta
 tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
@@ -77,5 +79,7 @@ DokuWiki's bundled jQuery for plugin initialization. Test integrations with
 your DokuWiki template and any GTM tags before enabling them on a live site.
 
 ## License
+
+Copyright (C) i-net /// software.
 
 GPL-2.0. See `LICENSE`.
