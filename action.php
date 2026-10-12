@@ -60,15 +60,20 @@ class action_plugin_googleconsentmananger extends ActionPlugin
             }
         }
 
-        $event->data['script'][] = [
-            'type' => 'text/javascript',
-            '_data' => "window.dataLayer = window.dataLayer || [];\n" .
-                "window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};\n" .
-                "window.gtag('consent', 'default', {" .
-                "'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied'," .
-                "'analytics_storage':'denied','functionality_storage':'granted'," .
-                "'personalization_storage':'denied','security_storage':'granted'});",
-        ];
+        $hasTrackingIntegration = $this->validId($this->getConf('GTMID'), '/^GTM-[A-Z0-9]+$/') !== '' ||
+            $this->validId($this->getConf('GA4ID'), '/^G-[A-Z0-9]+$/') !== '' ||
+            $this->validId($this->getConf('adsenseID'), '/^ca-pub-[0-9]{16}$/') !== '';
+        if ($hasTrackingIntegration) {
+            $event->data['script'][] = [
+                'type' => 'text/javascript',
+                '_data' => "window.dataLayer = window.dataLayer || [];\n" .
+                    "window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};\n" .
+                    "window.gtag('consent', 'default', {" .
+                    "'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied'," .
+                    "'analytics_storage':'denied','functionality_storage':'granted'," .
+                    "'personalization_storage':'denied','security_storage':'granted'});",
+            ];
+        }
     }
 
     private function validId($value, $pattern)

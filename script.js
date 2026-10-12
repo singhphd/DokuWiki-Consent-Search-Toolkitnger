@@ -66,13 +66,13 @@ jQuery(function () {
 
     function loadGTM() {
         if (!options.GTMID || document.getElementById('googleconsent-gtm')) return;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
         var script = document.createElement('script');
         script.id = 'googleconsent-gtm';
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(options.GTMID);
         document.head.appendChild(script);
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
     }
 
     function loadGA4() {
@@ -102,12 +102,11 @@ jQuery(function () {
     function loadConsentedIntegrations(choice) {
         updateGoogleConsent(choice);
         if (options.consentMode === 'consent') loadGTM();
+        else if (choice.analytics || choice.advertising) loadGTM();
         if (choice.analytics) {
-            if (options.GTMID && options.consentMode === 'strict') loadGTM();
             if (!options.GTMID) loadGA4();
         }
         if (choice.advertising) {
-            if (options.GTMID && options.consentMode === 'strict') loadGTM();
             loadAdSense();
         }
     }
