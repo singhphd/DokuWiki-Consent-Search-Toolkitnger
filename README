@@ -1,8 +1,8 @@
 # Google Consent Manager for DokuWiki
 
-Manage optional analytics and advertising consent, and conditionally load Google
-Tag Manager, Google Analytics 4, and AdSense Auto Ads. Webmaster verification
-tokens can also be added without enabling tracking.
+Manage optional analytics and advertising consent, conditionally load Google
+tags, add webmaster verification metadata, and provide Google News sitemap and
+IndexNow integrations.
 
 ## Setup
 
@@ -20,8 +20,34 @@ in DokuWiki's Configuration Manager:
   its matching key response URL as described below.
 
 Invalid IDs and verification tokens are ignored. The privacy policy URL must be
-a relative path or an HTTP(S) URL. Verification tags are independent from
+a root-relative path or an HTTP(S) URL. Verification tags are independent from
 tracking consent.
+
+## Features and settings
+
+All settings are available in DokuWiki's Configuration Manager:
+
+| Setting | Purpose |
+| --- | --- |
+| `consentMode` | `strict` (default) gates all Google tag downloads until consent; `consent` loads GTM before a choice with Google's consent defaults denied. |
+| `GTMID` | Optional Google Tag Manager container (`GTM-...`). |
+| `GA4ID` | Optional standalone Google Analytics 4 measurement ID (`G-...`); ignored when GTM is configured. |
+| `adsenseID` | Optional AdSense Auto Ads publisher ID (`ca-pub-` plus 16 digits). |
+| `googleVerification`, `bingVerification`, `yandexVerification`, `pinterestVerification` | Optional search-engine/webmaster domain-verification tokens, emitted as standard meta tags. |
+| `newsPublicationName`, `newsLanguage`, `newsNamespace` | Enable a Google News sitemap for a namespace, using the publication's exact registered name and a two-letter language code. |
+| `indexNowKey` | Optional IndexNow API key (8–128 letters, digits, or hyphens); enables the verification response URL and page-change notifications. |
+| `acceptBody` | Custom consent-banner message. |
+| `policyURL` | Optional privacy-policy link in the banner. |
+| `expireDays` | Consent-cookie lifetime in days (1–3650; default 180). |
+| `acceptOnContinue`, `acceptOnScroll`, `acceptAnyClick` | Optional shortcuts that accept both analytics and advertising; disabled by default. |
+
+The consent interface offers accept-all, reject-optional, and per-category
+preferences for analytics and advertising; necessary functionality and security
+storage are always allowed. The saved choice can be changed or withdrawn using
+the persistent **Cookie preferences** button. The banner uses translated
+language strings, supports keyboard focus and Escape to close the preferences
+panel, and is shown on page-view actions. Consent is stored separately from
+DokuWiki's own session and other cookies.
 
 ## Consent behavior
 
@@ -88,8 +114,9 @@ policies and is not guaranteed by sitemap submission.
 
 ## IndexNow
 
-After public page creation, edits, reverts, or deletion, the plugin submits the
-page URL to the IndexNow API. Minor edits are ignored. IndexNow setup requires
+After page creation, edits, reverts, or deletion, the plugin submits the page
+URL to the IndexNow API; hidden pages and pages without public read access are
+excluded for non-deletion events. Minor edits are ignored. IndexNow setup requires
 the configured key to be verifiable at
 `?do=googleconsentindexnowkey`; that URL responds with the key as plain text.
 Configure the full HTTPS key-location URL in IndexNow/Search Console tools if
@@ -103,6 +130,15 @@ The plugin uses DokuWiki's action-plugin events, Configuration Manager, and
 JavaScript information. No external JavaScript library is required beyond
 DokuWiki's bundled jQuery for plugin initialization. Test integrations with
 your DokuWiki template and any GTM tags before enabling them on a live site.
+
+## Suggested name
+
+**DokuWiki Consent & Search Toolkit** better reflects the combination of
+consent management, Google tag integrations, webmaster verification, news
+sitemaps, and IndexNow notifications than “Google Consent Manager.” The
+existing plugin ID is misspelled (`googleconsentmananger`); renaming the ID or
+installation directory is not part of this documentation update because it
+would affect upgrades, configuration, and stored consent.
 
 ## License
 
