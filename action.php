@@ -38,7 +38,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         ];
         foreach (['acceptAll', 'rejectAll', 'managePreferences', 'savePreferences',
                      'analyticsLabel', 'advertisingLabel', 'necessaryLabel', 'preferencesTitle',
-                     'preferencesDescription', 'openPreferences'] as $key) {
+                     'preferencesDescription', 'openPreferences', 'policyLabel'] as $key) {
             $JSINFO['plugins']['googleconsent'][$key] = (string)$this->getLang($key);
         }
     }

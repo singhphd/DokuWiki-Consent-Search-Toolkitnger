@@ -56,8 +56,11 @@ added by the DokuWiki template or other plugins are outside its control.
 
 The Webmaster-inspired verification fields add standard verification meta
 tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
-uses the publisher-ID script pattern. This plugin implements these
-integrations independently and does not copy code from those extensions.
+uses the publisher-ID script pattern. These features were informed by
+[dokuwiki-plugin-webmaster](https://github.com/mprins/dokuwiki-plugin-webmaster),
+[dokuwiki-plugin-googleanalytics](https://github.com/tatewake/dokuwiki-plugin-googleanalytics),
+and [dokuwiki-google-auto-ads-plugin](https://github.com/hbschiller/dokuwiki-google-auto-ads-plugin);
+this plugin implements them independently and does not copy their code.
 
 ## Compatibility
 

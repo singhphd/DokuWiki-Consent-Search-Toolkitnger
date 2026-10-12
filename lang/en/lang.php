@@ -16,3 +16,4 @@ $lang['necessaryLabel'] = 'Strictly necessary (always active)';
 $lang['preferencesTitle'] = 'Privacy preferences';
 $lang['preferencesDescription'] = 'Choose which optional categories you allow. You can change your choice at any time.';
 $lang['openPreferences'] = 'Cookie preferences';
+$lang['policyLabel'] = 'Privacy policy';

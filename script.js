@@ -15,7 +15,8 @@ jQuery(function () {
         necessaryLabel: 'Strictly necessary (always active)',
         preferencesTitle: 'Privacy preferences',
         preferencesDescription: 'Choose which optional categories you allow. You can change your choice at any time.',
-        openPreferences: 'Cookie preferences'
+        openPreferences: 'Cookie preferences',
+        policyLabel: 'Privacy policy'
     };
 
     function label(key) {
@@ -152,7 +153,7 @@ jQuery(function () {
         options.acceptBody || label('preferencesDescription'));
     banner.appendChild(message);
     if (options.policyURL) {
-        var policy = element('a', 'googleconsent-policy', 'Privacy policy');
+        var policy = element('a', 'googleconsent-policy', label('policyLabel'));
         policy.href = options.policyURL;
         policy.rel = 'noopener';
         banner.appendChild(policy);
@@ -164,10 +165,11 @@ jQuery(function () {
     actions.appendChild(createButton(label('rejectAll'), 'googleconsent-reject', function () {
         saveAndClose({ analytics: false, advertising: false });
     }));
-    actions.appendChild(createButton(label('managePreferences'), 'googleconsent-manage', function () {
+    var manageButton = createButton(label('managePreferences'), 'googleconsent-manage', function () {
         preferences.hidden = false;
         preferences.querySelector('input:not(:disabled)').focus();
-    }));
+    });
+    actions.appendChild(manageButton);
     banner.appendChild(actions);
 
     var preferences = element('div', 'googleconsent-preferences');
@@ -202,7 +204,7 @@ jQuery(function () {
         if (event.key === 'Escape') {
             preferences.hidden = true;
             if (savedConsent) banner.hidden = true;
-            opener.focus();
+            (savedConsent ? opener : manageButton).focus();
         }
     });
 
