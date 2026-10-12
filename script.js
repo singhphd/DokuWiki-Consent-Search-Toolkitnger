@@ -1,5 +1,5 @@
 jQuery(function () {
-    var config = JSINFO.plugins.googleconsent;
+    var config = JSINFO.plugins.consentsearchtoolkit;
     if (!config || JSINFO.ACT !== 'show') return;
 
     var options = config;
@@ -69,22 +69,22 @@ jQuery(function () {
     }
 
     function loadGTM() {
-        if (!options.GTMID || document.getElementById('googleconsent-gtm')) return;
+        if (!options.GTMID || document.getElementById('consentsearchtoolkit-gtm')) return;
         ensureGtag();
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
         var script = document.createElement('script');
-        script.id = 'googleconsent-gtm';
+        script.id = 'consentsearchtoolkit-gtm';
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(options.GTMID);
         document.head.appendChild(script);
     }
 
     function loadGA4() {
-        if (!options.GA4ID || options.GTMID || document.getElementById('googleconsent-ga4')) return;
+        if (!options.GA4ID || options.GTMID || document.getElementById('consentsearchtoolkit-ga4')) return;
         ensureGtag();
         var script = document.createElement('script');
-        script.id = 'googleconsent-ga4';
+        script.id = 'consentsearchtoolkit-ga4';
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(options.GA4ID);
         window.gtag('js', new Date());
@@ -93,9 +93,9 @@ jQuery(function () {
     }
 
     function loadAdSense() {
-        if (!options.adsenseID || document.getElementById('googleconsent-adsense')) return;
+        if (!options.adsenseID || document.getElementById('consentsearchtoolkit-adsense')) return;
         var script = document.createElement('script');
-        script.id = 'googleconsent-adsense';
+        script.id = 'consentsearchtoolkit-adsense';
         script.async = true;
         script.crossOrigin = 'anonymous';
         script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' +
@@ -138,7 +138,7 @@ jQuery(function () {
     }
 
     function createCategoryRow(parent, id, text, checked, disabled) {
-        var row = element('label', 'googleconsent-category');
+        var row = element('label', 'consentsearchtoolkit-category');
         var checkbox = element('input');
         checkbox.type = 'checkbox';
         checkbox.id = id;
@@ -150,53 +150,53 @@ jQuery(function () {
         return checkbox;
     }
 
-    var banner = element('section', 'googleconsent-banner');
+    var banner = element('section', 'consentsearchtoolkit-banner');
     banner.setAttribute('role', 'region');
     banner.setAttribute('aria-label', label('preferencesTitle'));
     banner.hidden = !!savedConsent;
 
-    var message = element('p', 'googleconsent-message',
+    var message = element('p', 'consentsearchtoolkit-message',
         options.acceptBody || label('preferencesDescription'));
     banner.appendChild(message);
     if (options.policyURL) {
-        var policy = element('a', 'googleconsent-policy', label('policyLabel'));
+        var policy = element('a', 'consentsearchtoolkit-policy', label('policyLabel'));
         policy.href = options.policyURL;
         banner.appendChild(policy);
     }
-    var actions = element('div', 'googleconsent-actions');
-    actions.appendChild(createButton(label('acceptAll'), 'googleconsent-accept', function () {
+    var actions = element('div', 'consentsearchtoolkit-actions');
+    actions.appendChild(createButton(label('acceptAll'), 'consentsearchtoolkit-accept', function () {
         saveAndClose({ analytics: true, advertising: true });
     }));
-    actions.appendChild(createButton(label('rejectAll'), 'googleconsent-reject', function () {
+    actions.appendChild(createButton(label('rejectAll'), 'consentsearchtoolkit-reject', function () {
         saveAndClose({ analytics: false, advertising: false });
     }));
-    var manageButton = createButton(label('managePreferences'), 'googleconsent-manage', function () {
+    var manageButton = createButton(label('managePreferences'), 'consentsearchtoolkit-manage', function () {
         preferences.hidden = false;
         preferences.querySelector('input:not(:disabled)').focus();
     });
     actions.appendChild(manageButton);
     banner.appendChild(actions);
 
-    var preferences = element('div', 'googleconsent-preferences');
+    var preferences = element('div', 'consentsearchtoolkit-preferences');
     preferences.hidden = true;
     preferences.setAttribute('role', 'group');
-    preferences.setAttribute('aria-labelledby', 'googleconsent-title');
-    preferences.appendChild(element('h2', '', label('preferencesTitle'))).id = 'googleconsent-title';
+    preferences.setAttribute('aria-labelledby', 'consentsearchtoolkit-title');
+    preferences.appendChild(element('h2', '', label('preferencesTitle'))).id = 'consentsearchtoolkit-title';
     preferences.appendChild(element('p', '', label('preferencesDescription')));
-    createCategoryRow(preferences, 'googleconsent-necessary', label('necessaryLabel'), true, true);
-    var analytics = createCategoryRow(preferences, 'googleconsent-analytics',
+    createCategoryRow(preferences, 'consentsearchtoolkit-necessary', label('necessaryLabel'), true, true);
+    var analytics = createCategoryRow(preferences, 'consentsearchtoolkit-analytics',
         label('analyticsLabel'), !!(savedConsent && savedConsent.analytics), false);
-    var advertising = createCategoryRow(preferences, 'googleconsent-advertising',
+    var advertising = createCategoryRow(preferences, 'consentsearchtoolkit-advertising',
         label('advertisingLabel'), !!(savedConsent && savedConsent.advertising), false);
-    preferences.appendChild(createButton(label('savePreferences'), 'googleconsent-save', function () {
+    preferences.appendChild(createButton(label('savePreferences'), 'consentsearchtoolkit-save', function () {
         saveAndClose({ analytics: analytics.checked, advertising: advertising.checked });
     }));
-    preferences.appendChild(createButton(label('rejectAll'), 'googleconsent-reject', function () {
+    preferences.appendChild(createButton(label('rejectAll'), 'consentsearchtoolkit-reject', function () {
         saveAndClose({ analytics: false, advertising: false });
     }));
     banner.appendChild(preferences);
 
-    var opener = createButton(label('openPreferences'), 'googleconsent-opener', function () {
+    var opener = createButton(label('openPreferences'), 'consentsearchtoolkit-opener', function () {
         banner.hidden = false;
         preferences.hidden = false;
         preferences.querySelector('input:not(:disabled)').focus();

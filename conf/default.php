@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Default settings for the googleconsentmananger plugin
+ * Default settings for the consentsearchtoolkit plugin
  *
  * @author i-net /// software <tools@inetsoftware.de>
  */

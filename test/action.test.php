@@ -67,15 +67,15 @@ namespace {
     function p_get_metadata($id, $key) { return $GLOBALS['TEST_TITLES'][$id] ?? ''; }
     function noNS($id) { return substr($id, strrpos($id, ':') === false ? 0 : strrpos($id, ':') + 1); }
     function wl($id = '', $params = [], $absolute = false, $separator = '&') {
-        if (isset($params['do']) && $params['do'] === 'googleconsentindexnowkey') {
-            return DOKU_URL . '?do=googleconsentindexnowkey';
+        if (isset($params['do']) && $params['do'] === 'consentsearchtoolkitindexnowkey') {
+            return DOKU_URL . '?do=consentsearchtoolkitindexnowkey';
         }
         return DOKU_URL . $id;
     }
 
     require dirname(__DIR__) . '/action.php';
 
-    $plugin = new action_plugin_googleconsentmananger();
+    $plugin = new action_plugin_consentsearchtoolkit();
     $plugin->settings = [
         'consentMode' => 'invalid',
         'GTMID' => 'javascript:alert(1)',
@@ -93,7 +93,7 @@ namespace {
     $GLOBALS['conf'] = ['template' => 'default'];
     $GLOBALS['JSINFO'] = [];
     $plugin->handleDokuwikiStarted(new \dokuwiki\Extension\Event(), null);
-    $config = $GLOBALS['JSINFO']['plugins']['googleconsent'];
+    $config = $GLOBALS['JSINFO']['plugins']['consentsearchtoolkit'];
     $check = function ($condition, $description) {
         if (!$condition) throw new \RuntimeException('Action configuration test failed: ' . $description);
     };
@@ -115,14 +115,14 @@ namespace {
     $check(strpos($event->data['script'][0]['_data'], "'analytics_storage':'denied'") !== false,
         'consent defaults are emitted before configured tags');
 
-    $verificationOnly = new action_plugin_googleconsentmananger();
+    $verificationOnly = new action_plugin_consentsearchtoolkit();
     $verificationOnly->settings = ['googleVerification' => 'token123'];
     $verificationEvent = new \dokuwiki\Extension\Event();
     $verificationOnly->handleTplMetaheaderOutput($verificationEvent, null);
     $check($verificationEvent->data['script'] === [],
         'verification-only setup does not emit unused tracking JavaScript');
 
-    $news = new action_plugin_googleconsentmananger();
+    $news = new action_plugin_consentsearchtoolkit();
     $news->settings = [
         'newsPublicationName' => 'Example News & Reports',
         'newsLanguage' => 'en',
@@ -150,7 +150,7 @@ namespace {
     $check(strpos($xml, 'New &amp; Improved &lt;News&gt;') !== false, 'article title is XML escaped');
     $check(strpos($xml, 'news:old') === false, 'articles older than 48 hours are omitted');
 
-    $indexNow = new action_plugin_googleconsentmananger();
+    $indexNow = new action_plugin_consentsearchtoolkit();
     $indexNow->settings = ['indexNowKey' => 'valid-key-123'];
     $saveEvent = new \dokuwiki\Extension\Event();
     $saveEvent->data = ['id' => 'news:recent', 'changeType' => DOKU_CHANGE_TYPE_EDIT];
@@ -162,10 +162,10 @@ namespace {
     $check($endpoint === 'https://api.indexnow.org/indexnow', 'IndexNow uses the official submission endpoint');
     $check($json['key'] === 'valid-key-123' && $json['host'] === 'wiki.example',
         'IndexNow payload uses configured key and canonical host');
-    $check($json['keyLocation'] === 'https://wiki.example/?do=googleconsentindexnowkey',
+    $check($json['keyLocation'] === 'https://wiki.example/?do=consentsearchtoolkitindexnowkey',
         'IndexNow payload identifies the plugin key verification endpoint');
 
-    $invalidKeyPlugin = new action_plugin_googleconsentmananger();
+    $invalidKeyPlugin = new action_plugin_consentsearchtoolkit();
     $invalidKeyPlugin->settings = ['indexNowKey' => '<invalid>'];
     \dokuwiki\HTTP\DokuHTTPClient::$requests = [];
     $invalidKeyPlugin->handleWikiPageSave($saveEvent, null);
