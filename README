@@ -1,27 +1,71 @@
-googleconsentmananger plugin for DokuWiki
+# Google Consent Manager for DokuWiki
 
-Allows users to give consent to google tracking using GTM
+Manage optional analytics and advertising consent, and conditionally load Google
+Tag Manager, Google Analytics 4, and AdSense Auto Ads. Webmaster verification
+tokens can also be added without enabling tracking.
 
-All documentation for this plugin can be found at
-https://github.com/i-net-software/dokuwiki-plugin-googleconsentmananger
+## Setup
 
-If you install this plugin manually, make sure it is installed in
-lib/plugins/googleconsentmananger/ - if the folder is called different it
-will not work!
+Install the plugin in `lib/plugins/googleconsentmananger/`, then configure it
+in DokuWiki's Configuration Manager:
 
-Please refer to http://www.dokuwiki.org/extensions for additional info
-on how to install extensions in DokuWiki.
+* Set **Consent mode** to `strict` or `consent`.
+* Configure a GTM container ID (`GTM-...`), a GA4 measurement ID (`G-...`), or
+  an AdSense publisher ID (`ca-pub-` followed by 16 digits), as needed.
+* Add optional Google, Bing, Yandex, and Pinterest verification tokens.
+* Set the privacy policy URL and consent retention period.
 
-----
-Copyright (C) i-net /// software <tools@inetsoftware.de>
+Invalid IDs and verification tokens are ignored. The privacy policy URL must be
+a relative path or an HTTP(S) URL. Verification tags are independent from
+tracking consent.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License
+## Consent behavior
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+**Strict opt-in** is the default. No GTM, GA4, or AdSense remote script is
+requested until the visitor opts into its category. GA4 loads only when
+analytics is allowed; Auto Ads loads only when advertising is allowed. If GTM
+is configured, it loads after either optional category is accepted. Configure
+GTM tags with appropriate built-in Consent Mode checks so tags respect the
+visitor's category choices.
 
-See the LICENSING file for details
+**Consent Mode** initializes Google's consent defaults as denied, then loads
+the configured GTM container even before a choice is saved. Google tags may
+send cookieless pings while consent is denied, depending on the tags and
+container configuration. Choose strict opt-in if any pre-consent Google
+requests are unacceptable.
+
+Consent is stored in a plugin-specific cookie. Visitors can reopen **Cookie
+preferences** to update or withdraw optional consent. Necessary functionality
+and security storage remain allowed; analytics and advertising are controlled
+separately. A changed choice updates Google Consent Mode immediately, but a
+script already downloaded cannot be unloaded from the current page.
+
+The optional accept-on-navigation, accept-on-scroll, and accept-on-click
+settings treat those actions as acceptance of **both** optional categories.
+These interactions may be accidental and may not constitute valid consent in
+your jurisdiction; leave them disabled unless you have reviewed the legal
+implications.
+
+## Integrations and duplication
+
+If both GTM and a GA4 ID are configured, the standalone GA4 tag is not loaded;
+configure GA4 in GTM instead. Do not configure the same GA4 property or Auto
+Ads integration both directly and in GTM, or duplicate collection/ads may
+result. This plugin gates its direct integrations, but third-party scripts
+added by the DokuWiki template or other plugins are outside its control.
+
+The Webmaster-inspired verification fields add standard verification meta
+tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
+uses the publisher-ID script pattern. This plugin implements these
+integrations independently and does not copy code from those extensions.
+
+## Compatibility
+
+The plugin uses DokuWiki's action-plugin events, Configuration Manager, and
+JavaScript information. No external JavaScript library is required beyond
+DokuWiki's bundled jQuery for plugin initialization. Test integrations with
+your DokuWiki template and any GTM tags before enabling them on a live site.
+
+## License
+
+GPL-2.0. See `LICENSE`.

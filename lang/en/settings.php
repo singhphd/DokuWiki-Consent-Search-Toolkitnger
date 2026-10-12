@@ -6,15 +6,17 @@
  * @author i-net /// software <tools@inetsoftware.de>
  */
 
-$lang['GTMID']              = 'Google Tag Manager ID';
-$lang['acceptBody']         = 'Message displayed on bar';
-$lang['acceptButton']       = 'Text on accept/enable button';
-$lang['declineButton']      = 'Text on decline/disable button';
-$lang['policyButton']       = 'Text on Privacy Policy button';
-$lang['policyURL']          = 'URL of Privacy Policy';
-$lang['acceptOnContinue']   = 'Set to true to accept cookies when visitor moves to another page';
-$lang['acceptOnScroll']     = 'Set to true to accept cookies when visitor scrolls X pixels up or down';
-$lang['acceptAnyClick']     = 'Set to true to accept cookies when visitor clicks anywhere on the page';
-$lang['expireDays']         = 'Number of days for cookieBar cookie to be stored for';
-$lang['renewOnVisit']       = 'Renew the cookie upon revisit to website';
-$lang['forceShow']          = 'Force cookieBar to show regardless of user cookie preference';
+$lang['consentMode'] = 'Tag loading mode (strict opt-in or Consent Mode)';
+$lang['GTMID'] = 'Google Tag Manager container ID';
+$lang['GA4ID'] = 'Google Analytics 4 measurement ID (used only without GTM)';
+$lang['adsenseID'] = 'Google AdSense publisher ID for Auto Ads';
+$lang['googleVerification'] = 'Google Search Console verification token';
+$lang['bingVerification'] = 'Bing Webmaster verification token';
+$lang['yandexVerification'] = 'Yandex Webmaster verification token';
+$lang['pinterestVerification'] = 'Pinterest domain verification token';
+$lang['acceptBody'] = 'Consent banner message';
+$lang['policyURL'] = 'Privacy policy URL (optional)';
+$lang['expireDays'] = 'Days to remember consent (1–3650)';
+$lang['acceptOnContinue'] = 'Treat following an internal link as accepting all optional categories (not recommended)';
+$lang['acceptOnScroll'] = 'Treat scrolling this many pixels as accepting all optional categories (0 disables)';
+$lang['acceptAnyClick'] = 'Treat clicking outside the banner as accepting all optional categories (not recommended)';
