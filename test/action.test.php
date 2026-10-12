@@ -88,6 +88,8 @@ namespace {
         'bingVerification' => '<script>',
         'yandexVerification' => '',
         'pinterestVerification' => 'pin123',
+        'facebookVerification' => 'facebook123',
+        'customVerification' => 'amazon-site-verification=AMZ+token/123==,example:verification=example_handle,broken name=inject,unsafe=bad<script>',
     ];
 
     $GLOBALS['conf'] = ['template' => 'default'];
@@ -109,16 +111,31 @@ namespace {
 
     $event = new \dokuwiki\Extension\Event();
     $plugin->handleTplMetaheaderOutput($event, null);
-    $check(count($event->data['meta']) === 2, 'only valid verification tokens create meta tags');
+    $check(count($event->data['meta']) === 5, 'only valid verification tokens create meta tags');
     $check($event->data['meta'][0] === [
         'name' => 'google-site-verification',
         'content' => 'safe_token-123',
     ], 'Google verification token uses the expected meta format');
+    $check($event->data['meta'][2] === [
+        'name' => 'facebook-domain-verification',
+        'content' => 'facebook123',
+    ], 'Facebook domain verification token uses its standard meta format');
+    $check($event->data['meta'][3] === [
+        'name' => 'amazon-site-verification',
+        'content' => 'AMZ+token/123==',
+    ], 'custom verification metadata supports additional provider tokens');
+    $check($event->data['meta'][4] === [
+        'name' => 'example:verification',
+        'content' => 'example_handle',
+    ], 'custom metadata supports provider-specific meta names');
     $check(strpos($event->data['script'][0]['_data'], "'analytics_storage':'denied'") !== false,
         'consent defaults are emitted before configured tags');
 
     $verificationOnly = new action_plugin_consentsearchtoolkit();
-    $verificationOnly->settings = ['googleVerification' => 'token123'];
+    $verificationOnly->settings = [
+        'googleVerification' => 'token123',
+        'customVerification' => 'example:verification=another_token',
+    ];
     $verificationEvent = new \dokuwiki\Extension\Event();
     $verificationOnly->handleTplMetaheaderOutput($verificationEvent, null);
     $check($verificationEvent->data['script'] === [],

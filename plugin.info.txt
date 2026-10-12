@@ -1,7 +1,6 @@
 base   consentsearchtoolkit
-author i-net /// software
-email  tools@inetsoftware.de
-date   2024-06-03
+author RSYN RESEARCH LLP
+date   2026-10-12
 name   DokuWiki Consent & Search Toolkit
-desc   Consent controls, Google tags, webmaster tools, News sitemap and IndexNow
-url    https://github.com/i-net-software/dokuwiki-plugin-googleconsentmananger
+desc   Consent controls, webmaster verification, News sitemap and IndexNow
+url    https://github.com/singhphd/DokuWiki-Consent-Search-Toolkitnger

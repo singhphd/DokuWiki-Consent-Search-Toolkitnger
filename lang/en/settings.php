@@ -14,6 +14,8 @@ $lang['googleVerification'] = 'Google Search Console verification token';
 $lang['bingVerification'] = 'Bing Webmaster verification token';
 $lang['yandexVerification'] = 'Yandex Webmaster verification token';
 $lang['pinterestVerification'] = 'Pinterest domain verification token';
+$lang['facebookVerification'] = 'Facebook domain verification token';
+$lang['customVerification'] = 'Additional verification meta tags (name=content pairs, comma-separated)';
 $lang['newsPublicationName'] = 'Exact Google News publication name';
 $lang['newsLanguage'] = 'Google News sitemap language code (two-letter ISO 639-1)';
 $lang['newsNamespace'] = 'Namespace containing Google News articles';
