@@ -2,9 +2,8 @@ jQuery(function () {
     var config = JSINFO.plugins.googleconsent;
     if (!config || JSINFO.ACT !== 'show') return;
 
-    // Preserve the repository's existing plugin spelling in the cookie name.
-    var cookieName = 'googleconsentmananger-consent';
     var options = config;
+    var cookieName = options.consentCookieName;
     var savedConsent = readConsent();
     var labels = {
         acceptAll: 'Accept all',
@@ -134,6 +133,7 @@ jQuery(function () {
         banner.hidden = true;
         preferences.hidden = true;
         opener.hidden = false;
+        opener.focus();
     }
 
     function createCategoryRow(parent, id, text, checked, disabled) {
@@ -242,8 +242,29 @@ jQuery(function () {
     }
 
     if (!savedConsent && options.acceptAnyClick) {
+        function isPolicyLink(target) {
+            var policyURL;
+            if (!options.policyURL) return false;
+            try {
+                policyURL = new URL(options.policyURL, window.location.href).href;
+            } catch (error) {
+                return false;
+            }
+            while (target && target !== document.body) {
+                if (target.tagName === 'A') {
+                    try {
+                        if (new URL(target.href, window.location.href).href === policyURL) return true;
+                    } catch (error) {
+                        return false;
+                    }
+                }
+                target = target.parentNode;
+            }
+            return false;
+        }
+
         document.addEventListener('click', function onClick(event) {
-            if (!banner.contains(event.target) && event.target !== opener) {
+            if (!banner.contains(event.target) && event.target !== opener && !isPolicyLink(event.target)) {
                 document.removeEventListener('click', onClick);
                 acceptAll();
             }

@@ -97,7 +97,11 @@ function runPlugin({
         }
     });
     const window = {
-        location: { protocol: 'https:', origin: 'https://wiki.example' },
+        location: {
+            protocol: 'https:',
+            origin: 'https://wiki.example',
+            href: 'https://wiki.example/current'
+        },
         dataLayer: [],
         listeners: {},
         scrollY: 0,
@@ -107,6 +111,7 @@ function runPlugin({
     if (!noGtag) window.gtag = (...args) => window.dataLayer.push(args);
     const config = Object.assign({
         template: 'default',
+        consentCookieName: consentCookie,
         consentMode: mode,
         GTMID: 'GTM-ABC123',
         GA4ID: 'G-ABC123',
@@ -160,6 +165,7 @@ test('strict opt-in does not load tags until a category is accepted', () => {
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
     ]);
+    assert.equal(plugin.button('googleconsent-opener').focused, true);
     const cookies = plugin.document.cookie;
     assert.match(cookies, /dokuwiki_session=keep/);
     assert.ok(cookies.includes(`${consentCookie}=`));
@@ -261,9 +267,43 @@ test('optional scroll and click shortcuts persist an explicit all-category choic
     scrolled.window.listeners.scroll();
     assert.ok(scrolled.document.cookie.includes(`${consentCookie}=`));
 
-    const clicked = runPlugin({ overrides: { acceptAnyClick: true } });
+    const clicked = runPlugin({
+        overrides: { acceptAnyClick: true, policyURL: '/privacy' }
+    });
+    const policyLink = new Element('a');
+    policyLink.href = 'https://wiki.example/privacy';
+    clicked.body.appendChild(policyLink);
+    clicked.document.listeners.click({ target: policyLink });
+    assert.equal(clicked.document.cookie.includes(`${consentCookie}=`), false);
     clicked.document.listeners.click({ target: new Element('a') });
     assert.ok(clicked.document.cookie.includes(`${consentCookie}=`));
+});
+
+test('Consent Mode reject and preference changes update and withdraw categories', () => {
+    const plugin = runPlugin({ mode: 'consent' });
+    plugin.button('googleconsent-reject').click();
+    let updates = plugin.window.dataLayer.filter(Array.isArray)
+        .filter(call => call[0] === 'consent' && call[1] === 'update');
+    assert.equal(updates.at(-1)[2].analytics_storage, 'denied');
+    assert.equal(updates.at(-1)[2].ad_storage, 'denied');
+
+    plugin.button('googleconsent-opener').click();
+    find(plugin.body, item => item.id === 'googleconsent-analytics').checked = true;
+    find(plugin.body, item => item.id === 'googleconsent-advertising').checked = true;
+    plugin.button('googleconsent-save').click();
+    updates = plugin.window.dataLayer.filter(Array.isArray)
+        .filter(call => call[0] === 'consent' && call[1] === 'update');
+    assert.equal(updates.at(-1)[2].analytics_storage, 'granted');
+    assert.equal(updates.at(-1)[2].ad_storage, 'granted');
+
+    plugin.button('googleconsent-opener').click();
+    find(plugin.body, item => item.id === 'googleconsent-analytics').checked = false;
+    find(plugin.body, item => item.id === 'googleconsent-advertising').checked = false;
+    plugin.button('googleconsent-save').click();
+    updates = plugin.window.dataLayer.filter(Array.isArray)
+        .filter(call => call[0] === 'consent' && call[1] === 'update');
+    assert.equal(updates.at(-1)[2].analytics_storage, 'denied');
+    assert.equal(updates.at(-1)[2].ad_storage, 'denied');
 });
 
 test('Escape closes the preferences panel and returns focus', () => {

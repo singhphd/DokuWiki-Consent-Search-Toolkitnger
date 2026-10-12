@@ -27,6 +27,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         if ($scrollThreshold === 1) $scrollThreshold = 1000;
         $JSINFO['plugins']['googleconsent'] = [
             'template' => $conf['template'],
+            'consentCookieName' => 'googleconsentmananger-consent',
             'consentMode' => in_array($mode, ['strict', 'consent'], true) ? $mode : 'strict',
             'GTMID' => $this->validId($this->getConf('GTMID'), '/^GTM-[A-Z0-9]+$/'),
             'GA4ID' => $this->validId($this->getConf('GA4ID'), '/^G-[A-Z0-9]+$/'),
