@@ -62,11 +62,26 @@ class action_plugin_consentsearchtoolkit extends ActionPlugin
             'bingVerification' => 'msvalidate.01',
             'yandexVerification' => 'yandex-verification',
             'pinterestVerification' => 'p:domain_verify',
+            'facebookVerification' => 'facebook-domain-verification',
         ];
         foreach ($verification as $setting => $name) {
             $value = (string)$this->getConf($setting);
             if ($value !== '' && strlen($value) <= 255 && preg_match('/^[A-Za-z0-9_-]+$/', $value)) {
                 $event->data['meta'][] = ['name' => $name, 'content' => $value];
+            }
+        }
+
+        $customVerification = (string)$this->getConf('customVerification');
+        if (strlen($customVerification) <= 4096) {
+            foreach (explode(',', $customVerification) as $entry) {
+                $separator = strpos($entry, '=');
+                if ($separator === false) continue;
+                $name = trim(substr($entry, 0, $separator));
+                $value = trim(substr($entry, $separator + 1));
+                if (preg_match('/^[A-Za-z][A-Za-z0-9:._-]{0,127}$/', $name) &&
+                    preg_match('/^[A-Za-z0-9+\/=:._-]{1,255}$/', $value)) {
+                    $event->data['meta'][] = ['name' => $name, 'content' => $value];
+                }
             }
         }
 
