@@ -12,84 +12,76 @@ use dokuwiki\Extension\Event;
  */
 class action_plugin_googleconsentmananger extends ActionPlugin
 {
-    const GTMID = 'GTMID';
-
-    /** @inheritDoc */
     public function register(EventHandler $controller)
     {
         $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handleTplMetaheaderOutput');
         $controller->register_hook('DOKUWIKI_STARTED', 'AFTER', $this, 'handleDokuwikiStarted');
     }
 
-    /**
-     * Event handler for DOKUWIKI_STARTED
-     *
-     * @see https://www.dokuwiki.org/devel:events:DOKUWIKI_STARTED
-     * @param Event $event Event object
-     * @param mixed $param optional parameter passed when event was registered
-     * @return void
-     */
     public function handleDokuwikiStarted(Event $event, $param)
     {
-        global $JSINFO;
-        global $conf;
-        $JSINFO['plugins']['googleconsent'] = array (
-            'template' => $conf['template'],
-        );
-        $this->addConfig( 'acceptBody' );
-        $this->addConfig( 'acceptButton' );
-        $this->addConfig( 'declineButton' );
-        $this->addConfig( 'policyButton' );
-        $this->addConfig( 'policyURL' );
-        $this->addConfig( 'acceptOnContinue' );
-        $this->addConfig( 'acceptOnScroll' );
-        $this->addConfig( 'acceptAnyClick' );
-        $this->addConfig( 'expireDays' );
-        $this->addConfig( 'renewOnVisit' );
-        $this->addConfig( 'forceShow' );
-    }
+        global $JSINFO, $conf;
 
-    private function addConfig( $valueName ) {
-        global $JSINFO;
-        $value = $this->getConf($valueName);
-        if ( !empty( $value ) ) {
-            $JSINFO['plugins']['googleconsent'][$valueName] = $value;
+        $mode = $this->getConf('consentMode');
+        $JSINFO['plugins']['googleconsent'] = [
+            'template' => $conf['template'],
+            'consentMode' => in_array($mode, ['strict', 'consent'], true) ? $mode : 'strict',
+            'GTMID' => $this->validId($this->getConf('GTMID'), '/^GTM-[A-Z0-9]+$/'),
+            'GA4ID' => $this->validId($this->getConf('GA4ID'), '/^G-[A-Z0-9]+$/'),
+            'adsenseID' => $this->validId($this->getConf('adsenseID'), '/^ca-pub-[0-9]{16}$/'),
+            'acceptBody' => (string)$this->getConf('acceptBody'),
+            'policyURL' => $this->validPolicyUrl($this->getConf('policyURL')),
+            'expireDays' => max(1, min(3650, (int)$this->getConf('expireDays'))),
+            'acceptOnContinue' => (bool)$this->getConf('acceptOnContinue'),
+            'acceptOnScroll' => max(0, (int)$this->getConf('acceptOnScroll')),
+            'acceptAnyClick' => (bool)$this->getConf('acceptAnyClick'),
+        ];
+        foreach (['acceptAll', 'rejectAll', 'managePreferences', 'savePreferences',
+                     'analyticsLabel', 'advertisingLabel', 'necessaryLabel', 'preferencesTitle',
+                     'preferencesDescription', 'openPreferences'] as $key) {
+            $JSINFO['plugins']['googleconsent'][$key] = (string)$this->getLang($key);
         }
     }
 
-    /**
-     * Event handler for TPL_METAHEADER_OUTPUT
-     *
-     * @see https://www.dokuwiki.org/devel:events:TPL_METAHEADER_OUTPUT
-     * @param Event $event Event object
-     * @param mixed $param optional parameter passed when event was registered
-     * @return void
-     */
     public function handleTplMetaheaderOutput(Event $event, $param)
     {
-        $GTMID = $this->getConf(self::GTMID);
-        if(!$GTMID) {
-            return;
+        $verification = [
+            'googleVerification' => 'google-site-verification',
+            'bingVerification' => 'msvalidate.01',
+            'yandexVerification' => 'yandex-verification',
+            'pinterestVerification' => 'p:domain_verify',
+        ];
+        foreach ($verification as $setting => $name) {
+            $value = (string)$this->getConf($setting);
+            if ($value !== '' && strlen($value) <= 255 && preg_match('/^[A-Za-z0-9_-]+$/', $value)) {
+                $event->data['meta'][] = ['name' => $name, 'content' => $value];
+            }
         }
 
-        $event->data['noscript'][] = array (
-            '_data' => '<iframe src="//www.googletagmanager.com/ns.html?id='.$this->getConf(self::GTMID).'" height="0" width="0" style="display:none;visibility:hidden"></iframe>',
-        );
-        $event->data['script'][] = array (
+        $event->data['script'][] = [
             'type' => 'text/javascript',
-            '_data' => "
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag('config', '${GTMID}');
-            gtag('consent', 'default', {
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied',
-                'ad_storage': 'denied',
-                'analytics_storage': 'denied',
-                'wait_for_update': 500,
-            });
-            gtag('js', new Date());
-            ",
-        );
+            '_data' => "window.dataLayer = window.dataLayer || [];\n" .
+                "window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};\n" .
+                "window.gtag('consent', 'default', {" .
+                "'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied'," .
+                "'analytics_storage':'denied','functionality_storage':'granted'," .
+                "'personalization_storage':'denied','security_storage':'granted'});",
+        ];
+    }
+
+    private function validId($value, $pattern)
+    {
+        $value = (string)$value;
+        return preg_match($pattern, $value) ? $value : '';
+    }
+
+    private function validPolicyUrl($value)
+    {
+        $value = trim((string)$value);
+        if ($value === '') return '';
+        if (strpos($value, '/') === 0 && strpos($value, '//') !== 0) return $value;
+        $url = parse_url($value);
+        return $url && isset($url['scheme'], $url['host']) &&
+            in_array(strtolower($url['scheme']), ['http', 'https'], true) ? $value : '';
     }
 }
