@@ -88,7 +88,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
     {
         if ($event->data === 'googleconsentnews') {
             header('Content-Type: application/xml; charset=utf-8');
-            header('X-Robots-Tag: noindex');
+            header('Cache-Control: public, max-age=300');
             echo $this->generateNewsSitemap();
             exit;
         }

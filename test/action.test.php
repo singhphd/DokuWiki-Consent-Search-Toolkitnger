@@ -55,6 +55,7 @@ namespace {
     define('AUTH_READ', 1);
     define('DOKU_CHANGE_TYPE_CREATE', 'C');
     define('DOKU_CHANGE_TYPE_EDIT', 'E');
+    define('DOKU_CHANGE_TYPE_MINOR_EDIT', 'e');
     define('DOKU_CHANGE_TYPE_REVERT', 'R');
     define('DOKU_CHANGE_TYPE_DELETE', 'D');
     define('DOKU_URL', 'https://wiki.example/');
@@ -169,6 +170,15 @@ namespace {
     \dokuwiki\HTTP\DokuHTTPClient::$requests = [];
     $invalidKeyPlugin->handleWikiPageSave($saveEvent, null);
     $check(\dokuwiki\HTTP\DokuHTTPClient::$requests === [], 'invalid IndexNow keys disable submissions');
+    \dokuwiki\HTTP\DokuHTTPClient::$requests = [];
+    $privateSave = new \dokuwiki\Extension\Event();
+    $privateSave->data = ['id' => 'news:private-page', 'changeType' => DOKU_CHANGE_TYPE_EDIT];
+    $indexNow->handleWikiPageSave($privateSave, null);
+    $check(\dokuwiki\HTTP\DokuHTTPClient::$requests === [], 'restricted pages are not sent to IndexNow');
+    $minorSave = new \dokuwiki\Extension\Event();
+    $minorSave->data = ['id' => 'news:recent', 'changeType' => DOKU_CHANGE_TYPE_MINOR_EDIT];
+    $indexNow->handleWikiPageSave($minorSave, null);
+    $check(\dokuwiki\HTTP\DokuHTTPClient::$requests === [], 'minor edits are not sent to IndexNow');
 
     echo "Action configuration tests passed\n";
 }
