@@ -3,6 +3,8 @@
 use dokuwiki\Extension\ActionPlugin;
 use dokuwiki\Extension\EventHandler;
 use dokuwiki\Extension\Event;
+use dokuwiki\HTTP\DokuHTTPClient;
+use dokuwiki\Search\Indexer;
 
 /**
  * DokuWiki Plugin googleconsentmananger (Action Component)
@@ -20,6 +22,8 @@ class action_plugin_googleconsentmananger extends ActionPlugin
     {
         $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handleTplMetaheaderOutput');
         $controller->register_hook('DOKUWIKI_STARTED', 'AFTER', $this, 'handleDokuwikiStarted');
+        $controller->register_hook('COMMON_WIKIPAGE_SAVE', 'AFTER', $this, 'handleWikiPageSave');
+        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handleCustomAction');
     }
 
     public function handleDokuwikiStarted(Event $event, $param)
@@ -78,6 +82,138 @@ class action_plugin_googleconsentmananger extends ActionPlugin
                     "'personalization_storage':'denied','security_storage':'granted'});",
             ];
         }
+    }
+
+    public function handleCustomAction(Event $event, $param)
+    {
+        if ($event->data === 'googleconsentnews') {
+            header('Content-Type: application/xml; charset=utf-8');
+            header('X-Robots-Tag: noindex');
+            echo $this->generateNewsSitemap();
+            exit;
+        }
+
+        if ($event->data === 'googleconsentindexnowkey') {
+            $key = $this->getIndexNowKey();
+            if ($key === '') {
+                http_status(404);
+                exit;
+            }
+            header('Content-Type: text/plain; charset=utf-8');
+            header('Cache-Control: public, max-age=3600');
+            echo $key;
+            exit;
+        }
+    }
+
+    public function handleWikiPageSave(Event $event, $param)
+    {
+        $key = $this->getIndexNowKey();
+        if ($key === '' || empty($event->data['id'])) return;
+        if (!in_array($event->data['changeType'] ?? '', [
+            DOKU_CHANGE_TYPE_CREATE,
+            DOKU_CHANGE_TYPE_EDIT,
+            DOKU_CHANGE_TYPE_REVERT,
+            DOKU_CHANGE_TYPE_DELETE,
+        ], true)) return;
+
+        $id = cleanID($event->data['id']);
+        if (!$id || isHiddenPage($id)) return;
+        if (($event->data['changeType'] ?? '') !== DOKU_CHANGE_TYPE_DELETE &&
+            auth_aclcheck($id, '', []) < AUTH_READ) return;
+
+        $url = wl($id, '', true, '&');
+        $site = parse_url(DOKU_URL);
+        if (!$site || empty($site['host']) || parse_url($url, PHP_URL_HOST) !== $site['host']) return;
+
+        $keyLocation = wl('', ['do' => 'googleconsentindexnowkey'], true, '&');
+        $body = json_encode([
+            'host' => $site['host'],
+            'key' => $key,
+            'keyLocation' => $keyLocation,
+            'urlList' => [$url],
+        ]);
+        if ($body === false) return;
+
+        $http = new DokuHTTPClient();
+        $http->timeout = 5;
+        $http->headers['Content-Type'] = 'application/json; charset=utf-8';
+        try {
+            $http->post('https://api.indexnow.org/indexnow', $body);
+        } catch (\Throwable $e) {
+            // Search notification failures must not interrupt the page save.
+        }
+    }
+
+    public function generateNewsSitemap()
+    {
+        $publication = trim((string)$this->getConf('newsPublicationName'));
+        $language = strtolower(trim((string)$this->getConf('newsLanguage')));
+        $namespace = trim((string)$this->getConf('newsNamespace'), ':');
+        if ($publication === '' || !preg_match('/^[a-z]{2}$/', $language) || $namespace === '') {
+            return $this->formatNewsSitemap([]);
+        }
+
+        $pages = (new Indexer())->getAllPages();
+        $entries = [];
+        $now = time();
+        $cutoff = $now - (2 * 86400);
+        foreach ($pages as $id) {
+            if ($id !== $namespace && strpos($id, $namespace . ':') !== 0) continue;
+            if (isHiddenPage($id) || auth_aclcheck($id, '', []) < AUTH_READ) continue;
+
+            $meta = p_read_metadata($id);
+            $created = (int)($meta['persistent']['date']['created'] ?? 0);
+            if ($created < $cutoff || $created > $now) continue;
+
+            $title = trim((string)p_get_metadata($id, 'title'));
+            if ($title === '') $title = noNS($id);
+            $entries[] = [
+                'url' => wl($id, '', true, '&'),
+                'title' => $title,
+                'published' => $created,
+            ];
+        }
+
+        usort($entries, static function ($left, $right) {
+            return $right['published'] <=> $left['published'];
+        });
+        return $this->formatNewsSitemap(array_slice($entries, 0, 1000), $publication, $language);
+    }
+
+    private function formatNewsSitemap(array $entries, $publication = '', $language = '')
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ';
+        $xml .= 'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">' . "\n";
+        foreach ($entries as $entry) {
+            $xml .= "  <url>\n";
+            $xml .= '    <loc>' . $this->xmlEscape($entry['url']) . "</loc>\n";
+            $xml .= "    <news:news>\n";
+            $xml .= "      <news:publication>\n";
+            $xml .= '        <news:name>' . $this->xmlEscape($publication) . "</news:name>\n";
+            $xml .= '        <news:language>' . $this->xmlEscape($language) . "</news:language>\n";
+            $xml .= "      </news:publication>\n";
+            $xml .= '      <news:publication_date>' . gmdate('c', $entry['published']) .
+                "</news:publication_date>\n";
+            $xml .= '      <news:title>' . $this->xmlEscape($entry['title']) . "</news:title>\n";
+            $xml .= "    </news:news>\n";
+            $xml .= "  </url>\n";
+        }
+        return $xml . "</urlset>\n";
+    }
+
+    private function xmlEscape($value)
+    {
+        return htmlspecialchars((string)$value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+
+    private function getIndexNowKey()
+    {
+        $key = trim((string)$this->getConf('indexNowKey'));
+        return strlen($key) >= 8 && strlen($key) <= 128 && preg_match('/^[A-Za-z0-9-]+$/', $key)
+            ? $key
+            : '';
     }
 
     private function validId($value, $pattern)

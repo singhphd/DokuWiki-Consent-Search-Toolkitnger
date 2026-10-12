@@ -3,5 +3,5 @@ author i-net /// software
 email  tools@inetsoftware.de
 date   2024-06-03
 name   Google Consent Manager plugin
-desc   Consent controls for GTM, GA4 and AdSense with webmaster verification
+desc   Consent controls, Google tags, webmaster tools, News sitemap and IndexNow
 url    https://github.com/i-net-software/dokuwiki-plugin-googleconsentmananger
