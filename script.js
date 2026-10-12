@@ -1,86 +1,273 @@
-/* DOKUWIKI:include jquery.cookiebar.js */
+jQuery(function () {
+    var config = JSINFO.plugins.googleconsent;
+    if (!config || JSINFO.ACT !== 'show') return;
 
-jQuery(function(){(function($) {
-    /** wrapping GA functions */
-    window.ga = function () {
-        if ('show' != JSINFO.ACT) {
-            return;
-        }
-
-        if (typeof window.gtag === 'function' && arguments[0] === 'send' && arguments[1] === 'event') {
-            window.gtag('event', arguments[3], {
-                event_category: arguments[2],
-                event_label: arguments[4],
-            });
-        }
+    var options = config;
+    var cookieName = options.consentCookieName;
+    var savedConsent = readConsent();
+    var labels = {
+        acceptAll: 'Accept all',
+        rejectAll: 'Reject optional',
+        managePreferences: 'Manage preferences',
+        savePreferences: 'Save preferences',
+        analyticsLabel: 'Analytics',
+        advertisingLabel: 'Advertising',
+        necessaryLabel: 'Strictly necessary (always active)',
+        preferencesTitle: 'Privacy preferences',
+        preferencesDescription: 'Choose which optional categories you allow. You can change your choice at any time.',
+        openPreferences: 'Cookie preferences',
+        policyLabel: 'Privacy policy'
     };
 
-    if ('show' != JSINFO.ACT) {
-        return;
+    function label(key) {
+        var template = LANG.template && LANG.template[options.template];
+        return (template && template[key]) || options[key] || labels[key];
     }
 
-    var consentGiven = function ( cookieValue ) {
-        typeof window.gtag === 'function' && gtag('consent', 'update', {
-            ad_storage: 'granted',
-            ad_user_data: 'granted',
-            ad_personalization: 'granted',
-            analytics_storage: 'granted',
-            /*functional_storage: 'granted',
-            personalization_storage: 'granted',
-            security_storage: 'granted',*/
-        });
-    };
+    function readConsent() {
+        var entry = document.cookie.split(';').map(function (item) {
+            return item.trim();
+        }).filter(function (item) {
+            return item.indexOf(cookieName + '=') === 0;
+        })[0];
+        if (!entry) return null;
+        try {
+            var choice = JSON.parse(decodeURIComponent(entry.substring(cookieName.length + 1)));
+            if (choice && typeof choice.analytics === 'boolean' &&
+                typeof choice.advertising === 'boolean') return choice;
+        } catch (error) {
+            return null;
+        }
+        return null;
+    }
 
-    var consentDenied = function ( cookieValue ) {
-        typeof window.gtag === 'function' && gtag('consent', 'update', {
-            ad_storage: 'denied',
-            ad_user_data: 'denied',
-            ad_personalization: 'denied',
-            analytics_storage: 'denied',
-            functional_storage: 'denied',
+    function storeConsent(choice) {
+        var expires = new Date();
+        expires.setTime(expires.getTime() + (options.expireDays * 86400000));
+        document.cookie = cookieName + '=' + encodeURIComponent(JSON.stringify(choice)) +
+            '; expires=' + expires.toUTCString() + '; path=/; SameSite=Lax' +
+            (window.location.protocol === 'https:' ? '; Secure' : '');
+        savedConsent = choice;
+    }
+
+    function updateGoogleConsent(choice) {
+        if (typeof window.gtag !== 'function') return;
+        window.gtag('consent', 'update', {
+            analytics_storage: choice.analytics ? 'granted' : 'denied',
+            ad_storage: choice.advertising ? 'granted' : 'denied',
+            ad_user_data: choice.advertising ? 'granted' : 'denied',
+            ad_personalization: choice.advertising ? 'granted' : 'denied',
+            functionality_storage: 'granted',
             personalization_storage: 'denied',
-            security_storage: 'denied',
+            security_storage: 'granted'
         });
-    };
+    }
 
-    var getTemplateOrPluginOption = function ( name ) {
-        return ( LANG.template && LANG.template[ JSINFO.plugins.googleconsent.template ] ? LANG.template[ JSINFO.plugins.googleconsent.template ][ name ] : undefined ) || JSINFO.plugins.googleconsent[name];
-    };
+    function ensureGtag() {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    }
 
-    
-    $.cookieBar({
-        fixed:              true,
-        autoEnable:         false,
-        bottom:             true,
-        forceShow:          true,
-        append:             true,
+    function loadGTM() {
+        if (!options.GTMID || document.getElementById('googleconsent-gtm')) return;
+        ensureGtag();
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var script = document.createElement('script');
+        script.id = 'googleconsent-gtm';
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(options.GTMID);
+        document.head.appendChild(script);
+    }
 
-        message:            getTemplateOrPluginOption('acceptBody'),
-        acceptText:         getTemplateOrPluginOption('acceptButton'),
-        acceptButton:       !!getTemplateOrPluginOption('acceptButton'),
-        declineText:        getTemplateOrPluginOption('declineButton'),
-        declineButton:      !!getTemplateOrPluginOption('declineButton'),
-        policyText:         getTemplateOrPluginOption('policyButton'),
-        policyButton:       !!getTemplateOrPluginOption('policyButton'),
-        policyURL:          getTemplateOrPluginOption('policyURL'),
-        acceptOnContinue:   !!JSINFO.plugins.googleconsent.acceptOnContinue,
-        acceptOnScroll:     !!JSINFO.plugins.googleconsent.acceptOnScroll,
-        acceptAnyClick:     !!JSINFO.plugins.googleconsent.acceptAnyClick,
-        expireDays:         !!JSINFO.plugins.googleconsent.expireDays,
-        renewOnVisit:       !!JSINFO.plugins.googleconsent.renewOnVisit,
-        forceShow:          !!JSINFO.plugins.googleconsent.forceShow,
+    function loadGA4() {
+        if (!options.GA4ID || options.GTMID || document.getElementById('googleconsent-ga4')) return;
+        ensureGtag();
+        var script = document.createElement('script');
+        script.id = 'googleconsent-ga4';
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(options.GA4ID);
+        window.gtag('js', new Date());
+        window.gtag('config', options.GA4ID);
+        document.head.appendChild(script);
+    }
 
-        acceptFunction:     consentGiven,
-        declineFunction:    consentDenied,
+    function loadAdSense() {
+        if (!options.adsenseID || document.getElementById('googleconsent-adsense')) return;
+        var script = document.createElement('script');
+        script.id = 'googleconsent-adsense';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' +
+            encodeURIComponent(options.adsenseID);
+        document.head.appendChild(script);
+    }
+
+    function loadConsentedIntegrations(choice) {
+        ensureGtag();
+        updateGoogleConsent(choice);
+        if (options.consentMode === 'consent') loadGTM();
+        else if (choice.analytics || choice.advertising) loadGTM();
+        if (choice.analytics && !options.GTMID) loadGA4();
+        if (choice.advertising) {
+            loadAdSense();
+        }
+    }
+
+    function element(tag, className, text) {
+        var result = document.createElement(tag);
+        if (className) result.className = className;
+        if (text) result.textContent = text;
+        return result;
+    }
+
+    function createButton(text, className, callback) {
+        var button = element('button', className, text);
+        button.type = 'button';
+        button.addEventListener('click', callback);
+        return button;
+    }
+
+    function saveAndClose(choice) {
+        storeConsent(choice);
+        loadConsentedIntegrations(choice);
+        banner.hidden = true;
+        preferences.hidden = true;
+        opener.hidden = false;
+        opener.focus();
+    }
+
+    function createCategoryRow(parent, id, text, checked, disabled) {
+        var row = element('label', 'googleconsent-category');
+        var checkbox = element('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = id;
+        checkbox.checked = checked;
+        checkbox.disabled = !!disabled;
+        row.appendChild(checkbox);
+        row.appendChild(document.createTextNode(' ' + text));
+        parent.appendChild(row);
+        return checkbox;
+    }
+
+    var banner = element('section', 'googleconsent-banner');
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', label('preferencesTitle'));
+    banner.hidden = !!savedConsent;
+
+    var message = element('p', 'googleconsent-message',
+        options.acceptBody || label('preferencesDescription'));
+    banner.appendChild(message);
+    if (options.policyURL) {
+        var policy = element('a', 'googleconsent-policy', label('policyLabel'));
+        policy.href = options.policyURL;
+        banner.appendChild(policy);
+    }
+    var actions = element('div', 'googleconsent-actions');
+    actions.appendChild(createButton(label('acceptAll'), 'googleconsent-accept', function () {
+        saveAndClose({ analytics: true, advertising: true });
+    }));
+    actions.appendChild(createButton(label('rejectAll'), 'googleconsent-reject', function () {
+        saveAndClose({ analytics: false, advertising: false });
+    }));
+    var manageButton = createButton(label('managePreferences'), 'googleconsent-manage', function () {
+        preferences.hidden = false;
+        preferences.querySelector('input:not(:disabled)').focus();
+    });
+    actions.appendChild(manageButton);
+    banner.appendChild(actions);
+
+    var preferences = element('div', 'googleconsent-preferences');
+    preferences.hidden = true;
+    preferences.setAttribute('role', 'group');
+    preferences.setAttribute('aria-labelledby', 'googleconsent-title');
+    preferences.appendChild(element('h2', '', label('preferencesTitle'))).id = 'googleconsent-title';
+    preferences.appendChild(element('p', '', label('preferencesDescription')));
+    createCategoryRow(preferences, 'googleconsent-necessary', label('necessaryLabel'), true, true);
+    var analytics = createCategoryRow(preferences, 'googleconsent-analytics',
+        label('analyticsLabel'), !!(savedConsent && savedConsent.analytics), false);
+    var advertising = createCategoryRow(preferences, 'googleconsent-advertising',
+        label('advertisingLabel'), !!(savedConsent && savedConsent.advertising), false);
+    preferences.appendChild(createButton(label('savePreferences'), 'googleconsent-save', function () {
+        saveAndClose({ analytics: analytics.checked, advertising: advertising.checked });
+    }));
+    preferences.appendChild(createButton(label('rejectAll'), 'googleconsent-reject', function () {
+        saveAndClose({ analytics: false, advertising: false });
+    }));
+    banner.appendChild(preferences);
+
+    var opener = createButton(label('openPreferences'), 'googleconsent-opener', function () {
+        banner.hidden = false;
+        preferences.hidden = false;
+        preferences.querySelector('input:not(:disabled)').focus();
+    });
+    opener.hidden = !savedConsent;
+    document.body.appendChild(banner);
+    document.body.appendChild(opener);
+
+    preferences.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            preferences.hidden = true;
+            if (savedConsent) banner.hidden = true;
+            (savedConsent ? opener : manageButton).focus();
+        }
     });
 
-    (function (w, d, s, l, i) {
-        w[l] = w[l] || []; w[l].push({'gtm.start':new Date().getTime(), event: 'gtm.js'});
-        var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true;
-        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', window.dataLayer[0][1] );
+    if (savedConsent) loadConsentedIntegrations(savedConsent);
+    else if (options.consentMode === 'consent') loadGTM();
 
-    $.cookieBar( 'cookies' ) && consentGiven( 'accepted' );
+    function acceptAll() {
+        saveAndClose({ analytics: true, advertising: true });
+    }
 
-})(jQuery);});
+    function isSameSiteReferrer() {
+        if (!document.referrer) return false;
+        try {
+            return new URL(document.referrer).origin === window.location.origin;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function isPolicyLink(target) {
+        var policyURL;
+        if (!options.policyURL) return false;
+        try {
+            policyURL = new URL(options.policyURL, window.location.href).href;
+        } catch (error) {
+            return false;
+        }
+        while (target && target !== document.body) {
+            if (target.tagName === 'A') {
+                try {
+                    if (new URL(target.href, window.location.href).href === policyURL) return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+            target = target.parentNode;
+        }
+        return false;
+    }
+
+    if (!savedConsent && options.acceptOnContinue && isSameSiteReferrer()) acceptAll();
+
+    if (!savedConsent && options.acceptOnScroll > 0) {
+        var initialScroll = window.scrollY;
+        window.addEventListener('scroll', function onScroll() {
+            if (Math.abs(window.scrollY - initialScroll) >= options.acceptOnScroll) {
+                window.removeEventListener('scroll', onScroll);
+                acceptAll();
+            }
+        }, { passive: true });
+    }
+
+    if (!savedConsent && options.acceptAnyClick) {
+        document.addEventListener('click', function onClick(event) {
+            if (!banner.contains(event.target) && event.target !== opener && !isPolicyLink(event.target)) {
+                document.removeEventListener('click', onClick);
+                acceptAll();
+            }
+        });
+    }
+});

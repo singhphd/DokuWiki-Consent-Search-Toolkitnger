@@ -6,15 +6,21 @@
  * @author i-net /// software <tools@inetsoftware.de>
  */
 
-$conf['GTMID']              = '';
-$conf['acceptBody']         = '';
-$conf['acceptButton']       = '';
-$conf['declineButton']      = '';
-$conf['policyButton']       = '';
-$conf['policyURL']          = '';
-$conf['acceptOnContinue']   = '';
-$conf['acceptOnScroll']     = '';
-$conf['acceptAnyClick']     = '';
-$conf['expireDays']         = '60';
-$conf['renewOnVisit']       = '';
-$conf['forceShow']          = '';
+$conf['consentMode'] = 'strict';
+$conf['GTMID'] = '';
+$conf['GA4ID'] = '';
+$conf['adsenseID'] = '';
+$conf['googleVerification'] = '';
+$conf['bingVerification'] = '';
+$conf['yandexVerification'] = '';
+$conf['pinterestVerification'] = '';
+$conf['newsPublicationName'] = '';
+$conf['newsLanguage'] = 'en';
+$conf['newsNamespace'] = '';
+$conf['indexNowKey'] = '';
+$conf['acceptBody'] = 'We use optional analytics and advertising. Choose your preferences.';
+$conf['policyURL'] = '';
+$conf['expireDays'] = '180';
+$conf['acceptOnContinue'] = '';
+$conf['acceptOnScroll'] = '0';
+$conf['acceptAnyClick'] = '';
