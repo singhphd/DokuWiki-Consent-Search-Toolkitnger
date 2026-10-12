@@ -39,12 +39,17 @@ preferences** to update or withdraw optional consent. Necessary functionality
 and security storage remain allowed; analytics and advertising are controlled
 separately. A changed choice updates Google Consent Mode immediately, but a
 script already downloaded cannot be unloaded from the current page.
+Existing `cb-enabled` cookie-bar choices are not migrated because they cannot
+represent separate analytics and advertising preferences; visitors will be
+asked to make a new choice after upgrading.
 
 The optional accept-on-navigation, accept-on-scroll, and accept-on-click
 settings treat those actions as acceptance of **both** optional categories.
 These interactions may be accidental and may not constitute valid consent in
 your jurisdiction; leave them disabled unless you have reviewed the legal
-implications.
+implications. Scrolling is disabled at `0`; a stored legacy on/off value of
+`1` is upgraded to a 1000-pixel threshold to avoid accidental near-immediate
+acceptance.
 
 ## Integrations and duplication
 
@@ -52,7 +57,9 @@ If both GTM and a GA4 ID are configured, the standalone GA4 tag is not loaded;
 configure GA4 in GTM instead. Do not configure the same GA4 property or Auto
 Ads integration both directly and in GTM, or duplicate collection/ads may
 result. This plugin gates its direct integrations, but third-party scripts
-added by the DokuWiki template or other plugins are outside its control.
+added by the DokuWiki template or other plugins are outside its control. In
+strict mode, configure GTM tags to require the matching additional consent
+before firing; default Consent Mode checks may allow cookieless pings.
 
 The Webmaster-inspired verification fields add standard verification meta
 tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support

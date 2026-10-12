@@ -60,7 +60,13 @@ function find(element, predicate) {
     return null;
 }
 
-function runPlugin({ mode = 'strict', cookies = '', acceptOnScroll = 0, overrides = {} } = {}) {
+function runPlugin({
+    mode = 'strict',
+    cookies = '',
+    referrer = '',
+    acceptOnScroll = 0,
+    overrides = {}
+} = {}) {
     const cookieJar = new Map(cookies.split(';').filter(Boolean).map(item => {
         const [name, ...value] = item.trim().split('=');
         return [name, value.join('=')];
@@ -70,14 +76,15 @@ function runPlugin({ mode = 'strict', cookies = '', acceptOnScroll = 0, override
     const document = {
         head,
         body,
-        referrer: '',
+        referrer,
+        listeners: {},
         createElement: tag => new Element(tag),
         createTextNode: text => ({ textContent: text, children: [], contains: () => false }),
         getElementById(id) {
             return find({ children: [head, body] }, item => item.id === id);
         },
-        addEventListener() {},
-        removeEventListener() {}
+        addEventListener(name, callback) { this.listeners[name] = callback; },
+        removeEventListener(name) { delete this.listeners[name]; }
     };
     Object.defineProperty(document, 'cookie', {
         get: () => Array.from(cookieJar, ([name, value]) => `${name}=${value}`).join('; '),
@@ -90,8 +97,10 @@ function runPlugin({ mode = 'strict', cookies = '', acceptOnScroll = 0, override
     const window = {
         location: { protocol: 'https:', origin: 'https://wiki.example' },
         dataLayer: [],
-        addEventListener() {},
-        removeEventListener() {}
+        listeners: {},
+        scrollY: 0,
+        addEventListener(name, callback) { this.listeners[name] = callback; },
+        removeEventListener(name) { delete this.listeners[name]; }
     };
     window.gtag = (...args) => window.dataLayer.push(args);
     const config = Object.assign({
@@ -134,7 +143,7 @@ function runPlugin({ mode = 'strict', cookies = '', acceptOnScroll = 0, override
     const button = className => find(body, item =>
         item.tagName === 'BUTTON' && item.className === className);
     const externalScripts = () => head.children.filter(item => item.src);
-    return { body, button, document, externalScripts };
+    return { body, button, document, externalScripts, window };
 }
 
 test('strict opt-in does not load tags until a category is accepted', () => {
@@ -186,4 +195,55 @@ test('standalone GA4 and Auto Ads load only for their separate consent categorie
     assert.deepEqual(plugin.externalScripts().map(script => script.src), [
         'https://www.googletagmanager.com/gtag/js?id=G-ABC123'
     ]);
+
+    const adsOnly = runPlugin({
+        overrides: { GTMID: '', GA4ID: '', adsenseID: 'ca-pub-1234567890123456' }
+    });
+    adsOnly.button('googleconsent-manage').click();
+    find(adsOnly.body, item => item.id === 'googleconsent-advertising').checked = true;
+    adsOnly.button('googleconsent-save').click();
+    assert.deepEqual(adsOnly.externalScripts().map(script => script.src), [
+        'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456'
+    ]);
+});
+
+test('internal navigation acceptance is opt-in and malformed referrers do not break setup', () => {
+    const accepted = runPlugin({
+        referrer: 'https://wiki.example/old-page',
+        overrides: { acceptOnContinue: true }
+    });
+    assert.ok(accepted.document.cookie.includes('googleconsentmananger-consent='));
+    assert.equal(accepted.externalScripts().length, 2);
+
+    const malformed = runPlugin({
+        referrer: 'https://[invalid',
+        overrides: { acceptOnContinue: true },
+        acceptOnScroll: 500
+    });
+    assert.equal(malformed.externalScripts().length, 0);
+    assert.equal(typeof malformed.window.listeners.scroll, 'function');
+});
+
+test('a stored decision is applied before consented integrations load', () => {
+    const value = encodeURIComponent(JSON.stringify({ analytics: true, advertising: false }));
+    const plugin = runPlugin({ cookies: `googleconsentmananger-consent=${value}` });
+
+    assert.deepEqual(plugin.externalScripts().map(script => script.src), [
+        'https://www.googletagmanager.com/gtm.js?id=GTM-ABC123'
+    ]);
+    assert.equal(plugin.button('googleconsent-opener').hidden, false);
+});
+
+test('optional scroll and click shortcuts persist an explicit all-category choice', () => {
+    const scrolled = runPlugin({ acceptOnScroll: 500 });
+    scrolled.window.scrollY = 499;
+    scrolled.window.listeners.scroll();
+    assert.equal(scrolled.document.cookie.includes('googleconsentmananger-consent='), false);
+    scrolled.window.scrollY = 500;
+    scrolled.window.listeners.scroll();
+    assert.ok(scrolled.document.cookie.includes('googleconsentmananger-consent='));
+
+    const clicked = runPlugin({ overrides: { acceptAnyClick: true } });
+    clicked.document.listeners.click({ target: new Element('a') });
+    assert.ok(clicked.document.cookie.includes('googleconsentmananger-consent='));
 });

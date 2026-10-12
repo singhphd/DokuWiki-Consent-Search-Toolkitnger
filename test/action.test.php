@@ -36,6 +36,7 @@ namespace {
         'GA4ID' => 'G-VALID123',
         'adsenseID' => 'ca-pub-1234567890123456',
         'expireDays' => '-5',
+        'acceptOnScroll' => '1',
         'policyURL' => 'javascript:alert(1)',
         'googleVerification' => 'safe_token-123',
         'bingVerification' => '<script>',
@@ -55,6 +56,7 @@ namespace {
     $check($config['GA4ID'] === 'G-VALID123');
     $check($config['adsenseID'] === 'ca-pub-1234567890123456');
     $check($config['expireDays'] === 1);
+    $check($config['acceptOnScroll'] === 1000);
     $check($config['policyURL'] === '');
 
     $event = new \dokuwiki\Extension\Event();

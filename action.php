@@ -23,6 +23,8 @@ class action_plugin_googleconsentmananger extends ActionPlugin
         global $JSINFO, $conf;
 
         $mode = $this->getConf('consentMode');
+        $scrollThreshold = max(0, min(100000, (int)$this->getConf('acceptOnScroll')));
+        if ($scrollThreshold === 1) $scrollThreshold = 1000;
         $JSINFO['plugins']['googleconsent'] = [
             'template' => $conf['template'],
             'consentMode' => in_array($mode, ['strict', 'consent'], true) ? $mode : 'strict',
@@ -33,7 +35,7 @@ class action_plugin_googleconsentmananger extends ActionPlugin
             'policyURL' => $this->validPolicyUrl($this->getConf('policyURL')),
             'expireDays' => max(1, min(3650, (int)$this->getConf('expireDays'))),
             'acceptOnContinue' => (bool)$this->getConf('acceptOnContinue'),
-            'acceptOnScroll' => max(0, (int)$this->getConf('acceptOnScroll')),
+            'acceptOnScroll' => $scrollThreshold,
             'acceptAnyClick' => (bool)$this->getConf('acceptAnyClick'),
         ];
         foreach (['acceptAll', 'rejectAll', 'managePreferences', 'savePreferences',

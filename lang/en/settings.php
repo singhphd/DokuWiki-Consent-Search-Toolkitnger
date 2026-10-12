@@ -18,5 +18,5 @@ $lang['acceptBody'] = 'Consent banner message';
 $lang['policyURL'] = 'Privacy policy URL (optional)';
 $lang['expireDays'] = 'Days to remember consent (1–3650)';
 $lang['acceptOnContinue'] = 'Treat following an internal link as accepting all optional categories (not recommended)';
-$lang['acceptOnScroll'] = 'Treat scrolling this many pixels as accepting all optional categories (0 disables)';
+$lang['acceptOnScroll'] = 'Treat scrolling this many pixels as accepting all optional categories (0 disables; legacy value 1 becomes 1000)';
 $lang['acceptAnyClick'] = 'Treat clicking outside the banner as accepting all optional categories (not recommended)';

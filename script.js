@@ -2,6 +2,7 @@ jQuery(function () {
     var config = JSINFO.plugins.googleconsent;
     if (!config || JSINFO.ACT !== 'show') return;
 
+    // Preserve the repository's existing plugin spelling in the cookie name.
     var cookieName = 'googleconsentmananger-consent';
     var options = config;
     var savedConsent = readConsent();
@@ -76,6 +77,8 @@ jQuery(function () {
 
     function loadGA4() {
         if (!options.GA4ID || options.GTMID || document.getElementById('googleconsent-ga4')) return;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
         var script = document.createElement('script');
         script.id = 'googleconsent-ga4';
         script.async = true;
@@ -215,8 +218,16 @@ jQuery(function () {
         saveAndClose({ analytics: true, advertising: true });
     }
 
-    if (!savedConsent && options.acceptOnContinue && document.referrer &&
-        new URL(document.referrer).origin === window.location.origin) acceptAll();
+    function isSameSiteReferrer() {
+        if (!document.referrer) return false;
+        try {
+            return new URL(document.referrer).origin === window.location.origin;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    if (!savedConsent && options.acceptOnContinue && isSameSiteReferrer()) acceptAll();
 
     if (!savedConsent && options.acceptOnScroll > 0) {
         var initialScroll = window.scrollY;
