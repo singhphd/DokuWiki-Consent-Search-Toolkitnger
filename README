@@ -4,6 +4,8 @@ Manage optional analytics and advertising consent, conditionally load Google
 tags, add webmaster verification metadata, and provide Google News sitemap and
 IndexNow integrations.
 
+Developed by **RSYN RESEARCH LLP**.
+
 ## Setup
 
 Install the plugin in `lib/plugins/consentsearchtoolkit/`, then configure it
@@ -12,7 +14,8 @@ in DokuWiki's Configuration Manager:
 * Set **Consent mode** to `strict` or `consent`.
 * Configure a GTM container ID (`GTM-...`), a GA4 measurement ID (`G-...`), or
   an AdSense publisher ID (`ca-pub-` followed by 16 digits), as needed.
-* Add optional Google, Bing, Yandex, and Pinterest verification tokens.
+* Add optional Google, Bing, Yandex, Pinterest, and Facebook verification tokens.
+  Additional providers can use the custom verification meta-tag setting.
 * Set the privacy policy URL and consent retention period.
 * For a Google News sitemap, set the exact publication name registered with
   Google News, its two-letter language, and the namespace containing articles.
@@ -21,7 +24,10 @@ in DokuWiki's Configuration Manager:
 
 Invalid IDs and verification tokens are ignored. The privacy policy URL must be
 a root-relative path or an HTTP(S) URL. Verification tags are independent from
-tracking consent.
+tracking consent. Meta-tag verification works only for providers that offer that
+method; it does not create DNS records or upload verification files. Use DNS TXT
+verification at your domain host when a provider requires it or when you need
+domain-wide verification across subdomains.
 
 The plugin ID is now `consentsearchtoolkit`. When migrating from
 `googleconsentmananger`, install this plugin under its new directory, copy old
@@ -41,7 +47,8 @@ All settings are available in DokuWiki's Configuration Manager:
 | `GTMID` | Optional Google Tag Manager container (`GTM-...`). |
 | `GA4ID` | Optional standalone Google Analytics 4 measurement ID (`G-...`); ignored when GTM is configured. |
 | `adsenseID` | Optional AdSense Auto Ads publisher ID (`ca-pub-` plus 16 digits). |
-| `googleVerification`, `bingVerification`, `yandexVerification`, `pinterestVerification` | Optional search-engine/webmaster domain-verification tokens, emitted as standard meta tags. |
+| `googleVerification`, `bingVerification`, `yandexVerification`, `pinterestVerification`, `facebookVerification` | Optional provider-issued site/domain verification tokens, emitted as standard meta tags. |
+| `customVerification` | Additional provider-issued verification meta tags as comma-separated `name=content` pairs. Use the exact name and token supplied by the provider; tag names and values are restricted to safe characters. |
 | `newsPublicationName`, `newsLanguage`, `newsNamespace` | Enable a Google News sitemap for a namespace, using the publication's exact registered name and a two-letter language code. |
 | `indexNowKey` | Optional IndexNow API key (8–128 letters, digits, or hyphens); enables the verification response URL and page-change notifications. |
 | `acceptBody` | Custom consent-banner message. |
@@ -131,13 +138,28 @@ added by the DokuWiki template or other plugins are outside its control. In
 strict mode, configure GTM tags to require the matching additional consent
 before firing; default Consent Mode checks may allow cookieless pings.
 
-The Webmaster-inspired verification fields add standard verification meta
-tags. GA4 support follows the measurement-ID setup pattern; Auto Ads support
-uses the publisher-ID script pattern. These features were informed by
-[dokuwiki-plugin-webmaster](https://github.com/mprins/dokuwiki-plugin-webmaster),
-[dokuwiki-plugin-googleanalytics](https://github.com/tatewake/dokuwiki-plugin-googleanalytics),
-and [dokuwiki-google-auto-ads-plugin](https://github.com/hbschiller/dokuwiki-google-auto-ads-plugin);
-this plugin implements them independently and does not copy their code.
+The verification fields add standard meta tags to the page head. Use
+`customVerification` for any provider that supplies a meta-tag name and content,
+including provider-specific Amazon verification tags where offered. This does
+not verify X/Twitter domains through DNS, or satisfy providers that require a
+DNS record, HTML file, or another verification mechanism; complete those steps
+with the provider and your domain host.
+
+### Upstream and related DokuWiki plugins
+
+This plugin is a maintained derivative of the
+[i-net software Google Consent Manager plugin](https://github.com/i-net-software/dokuwiki-plugin-googleconsentmananger).
+Its webmaster-verification, analytics, and advertising integrations were also
+informed by these DokuWiki plugins:
+
+* [Webmaster](https://github.com/mprins/dokuwiki-plugin-webmaster)
+* [Google Analytics](https://github.com/tatewake/dokuwiki-plugin-googleanalytics)
+* [Google Auto Ads](https://github.com/hbschiller/dokuwiki-google-auto-ads-plugin)
+
+Their projects remain separately licensed and maintained. This toolkit retains
+the original GPL-2.0 license and credits the upstream project; related plugin
+references are attribution for development context, not a claim that those
+projects were forked or that their code is included here.
 
 ## Google News sitemap
 
@@ -182,6 +204,12 @@ applicable law take precedence.
 
 ## License
 
-Copyright (C) i-net /// software.
+Original work copyright (C) i-net /// software; subsequent modifications
+copyright (C) 2026 RSYN RESEARCH LLP.
 
 GPL-2.0. See `LICENSE`.
+
+This software is provided “as is”, without warranty of any kind, express or
+implied. RSYN RESEARCH LLP provides no technical support or maintenance
+commitment. Use is at your own risk. This disclaimer does not limit rights
+granted under GPL-2.0.
